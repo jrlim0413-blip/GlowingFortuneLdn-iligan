@@ -2051,7 +2051,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
               <div className="sql-instruction-step">
                 <strong>How to setup in 1 minute:</strong>
                 <ol>
-                  <li>Open your Cloud Database Project: <a href="https://supabase.com/dashboard/project/zebtqevwnockipsqifyf/sql" target="_blank" rel="noreferrer">SQL Editor</a>.</li>
+                  <li>Open your <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">Supabase Dashboard</a> and go to the <strong>SQL Editor</strong>.</li>
                   <li>Click <strong>New Query</strong>, paste the script below, and click <strong>Run</strong>.</li>
                   <li>Once created, this workstation will automatically authenticate accounts directly from your cloud directory!</li>
                 </ol>

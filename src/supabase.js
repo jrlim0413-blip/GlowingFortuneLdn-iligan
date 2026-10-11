@@ -3,13 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
 
-const supabaseUrl =
-  env.VITE_SUPABASE_URL || 'https://ejtsskrbkaqfdcouwvzh.supabase.co'
-const supabaseAnonKey =
-  env.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqdHNza3Jia2FxZmRjb3V3dnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MTI3MDAsImV4cCI6MjEwNzE4ODcwMH0.whKp_OjW-AU-OhxbnTHxtpG7-hsy23cUsgl11M8gtT0'
+// Load Supabase credentials exclusively from environment variables (.env / .env.local)
+// Never commit or hardcode credentials directly in source files.
+const supabaseUrl = (env.VITE_SUPABASE_URL || '').trim()
+const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY || '').trim()
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
+if (!isSupabaseConfigured && typeof console !== 'undefined' && env.DEV) {
+  console.warn(
+    '[Supabase] VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY are not configured. Supabase cloud sync features are disabled.'
+  )
+}
 
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
