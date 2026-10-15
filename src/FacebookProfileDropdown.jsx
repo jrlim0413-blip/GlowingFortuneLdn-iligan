@@ -1,4 +1,3 @@
-// src/FacebookProfileDropdown.jsx - Facebook-Style Profile & Account Switcher Dropdown with Dark Mode Toggle
 import React, { useState, useEffect, useRef } from 'react'
 import './FacebookProfileDropdown.css'
 
@@ -102,7 +101,6 @@ export default function FacebookProfileDropdown({
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
 
-  // Close on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -117,7 +115,6 @@ export default function FacebookProfileDropdown({
     }
   }, [isOpen])
 
-  // Close on Escape key
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape') setIsOpen(false)
@@ -134,12 +131,11 @@ export default function FacebookProfileDropdown({
   const userFullName = currentUser?.name || 'Accountant'
   const userRoleText = currentUser?.roleLabel || currentUser?.role || 'Staff'
 
-  // Other switchable accounts (exclude currently active user)
   const otherAccounts = allUsers.filter((u) => u.username !== currentUser?.username)
 
   return (
     <div className="fb-profile-container" ref={dropdownRef}>
-      {/* Topbar Trigger Button */}
+      {}
       <button
         type="button"
         className={`fb-trigger-btn ${isOpen ? 'active' : ''}`}
@@ -171,10 +167,10 @@ export default function FacebookProfileDropdown({
         </div>
       </button>
 
-      {/* Floating Facebook-Style Popover Menu */}
+      {}
       {isOpen && (
         <div className="fb-dropdown-menu" role="menu" aria-orientation="vertical">
-          {/* 1. Header Active Profile Card */}
+          {}
           <div className="fb-card fb-active-profile-card">
             <div className="fb-profile-card-top">
               <div className="fb-large-avatar">
@@ -198,7 +194,7 @@ export default function FacebookProfileDropdown({
               </span>
             </div>
 
-            {/* If simulating another account, show Return to Admin button */}
+            {}
             {currentUser?.simulatedFromAdmin && (
               <button
                 type="button"
@@ -215,7 +211,7 @@ export default function FacebookProfileDropdown({
             )}
           </div>
 
-          {/* 2. Account Switcher Section (Facebook style) */}
+          {}
           {canSwitchAccounts && otherAccounts.length > 0 && (
             <div className="fb-account-switcher-section">
               <div className="fb-section-header">
@@ -274,9 +270,9 @@ export default function FacebookProfileDropdown({
 
           <div className="fb-menu-divider" />
 
-          {/* 3. Settings & Actions List */}
+          {}
           <div className="fb-menu-items-list">
-            {/* Dark Mode Switcher Row */}
+            {}
             <div className="fb-menu-item fb-menu-toggle-item">
               <div className="fb-menu-item-left">
                 <div className="fb-icon-circle icon-darkmode">
@@ -290,7 +286,7 @@ export default function FacebookProfileDropdown({
                 </div>
               </div>
 
-              {/* Apple iOS Toggle Switch */}
+              {}
               <label
                 className={`ios-switch-cell ${isDarkMode ? 'is-granted' : 'is-denied'}`}
                 title="Toggle Dark Mode"
@@ -312,7 +308,7 @@ export default function FacebookProfileDropdown({
               </label>
             </div>
 
-            {/* Commissions Management (if permitted) */}
+            {}
             {can('manage_commissions') && (
               <button
                 type="button"
@@ -335,7 +331,7 @@ export default function FacebookProfileDropdown({
               </button>
             )}
 
-            {/* Users & RBAC Matrix (if permitted) */}
+            {}
             {can('manage_users') && (
               <button
                 type="button"
@@ -358,7 +354,7 @@ export default function FacebookProfileDropdown({
               </button>
             )}
 
-            {/* Activity & Audit Logs (if permitted) */}
+            {}
             {can('audit_logs') && (
               <button
                 type="button"
@@ -381,7 +377,7 @@ export default function FacebookProfileDropdown({
               </button>
             )}
 
-            {/* Log Out */}
+            {}
             <button
               type="button"
               className="fb-menu-item fb-menu-logout-item"
@@ -403,7 +399,7 @@ export default function FacebookProfileDropdown({
             </button>
           </div>
 
-          {/* 4. Footer Note */}
+          {}
           <div className="fb-dropdown-footer">
             <span>Glowing Fortune Corporation &bull; LDN Branch</span>
           </div>

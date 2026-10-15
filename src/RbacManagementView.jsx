@@ -242,13 +242,12 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
   const [users, setUsers] = useState(() => getRbacUsers())
   const [roles, setRoles] = useState(() => getRbacRoles())
   const [auditLogs, setAuditLogs] = useState(() => getAuditLogs())
-  const [activeTab, setActiveTab] = useState(initialTab || 'users') // 'users' | 'matrix' | 'logs'
-  const [matrixViewMode, setMatrixViewMode] = useState('roles') // 'roles' | 'accounts'
+  const [activeTab, setActiveTab] = useState(initialTab || 'users') 
+  const [matrixViewMode, setMatrixViewMode] = useState('roles') 
   const [accountPermsRev, setAccountPermsRev] = useState(0)
 
   const canSwitchAccounts = currentUser?.role === 'admin' || Boolean(currentUser?.simulatedFromAdmin)
 
-  // Listen for rbac updates across sessions
   useEffect(() => {
     const handleRbacUpdate = () => {
       setRoles(getRbacRoles())
@@ -264,24 +263,20 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     if (initialTab) setActiveTab(initialTab)
   }, [initialTab])
 
-  // Search & Filter
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRole, setFilterRole] = useState('all')
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [feedbackNotice, setFeedbackNotice] = useState('')
-  const [supabaseSyncStatus, setSupabaseSyncStatus] = useState('idle') // 'idle' | 'syncing' | 'connected' | 'table_missing' | 'error'
+  const [supabaseSyncStatus, setSupabaseSyncStatus] = useState('idle') 
   const [showSqlModal, setShowSqlModal] = useState(false)
 
-  // Fetch users and sync matrix permissions from Supabase table on mount
   useEffect(() => {
     if (!isSupabaseConfigured) return
 
-    // Pre-sync matrix permissions from Supabase
     syncMatrixPermissionsFromSupabase().catch(() => {})
 
     const unsubRealtime = subscribeToMatrixRealtime(() => {
@@ -293,7 +288,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       .then((res) => {
         const deletedList = getDeletedUsernames()
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          // Filter out any user that was previously marked as deleted
           const validUsers = res.data.filter(
             (u) => !deletedList.includes(u.username?.toLowerCase())
           )
@@ -301,7 +295,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
           saveRbacUsers(validUsers)
           setSupabaseSyncStatus('connected')
 
-          // Background cleanup of any lingering deleted accounts still in Supabase
           const lingering = res.data.filter((u) =>
             deletedList.includes(u.username?.toLowerCase())
           )
@@ -312,7 +305,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
           setSupabaseSyncStatus('table_missing')
         } else if (res.success && res.data.length === 0) {
           setSupabaseSyncStatus('connected')
-          // Auto-seed default users only if not in deleted list
           const activeDefaults = users.filter(
             (u) => !deletedList.includes(u.username?.toLowerCase())
           )
@@ -330,7 +322,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     }
   }, [])
 
-  // New User Form State
   const [formData, setFormData] = useState({
     username: '',
     name: '',
@@ -373,7 +364,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
   const tabPerms = useMemo(() => PERMISSIONS.filter((p) => p.type === 'tab'), [])
   const featurePerms = useMemo(() => PERMISSIONS.filter((p) => p.type === 'feature'), [])
 
-  // Filtered Users List
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchesSearch =
@@ -394,7 +384,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     })
   }, [users, searchQuery, filterRole])
 
-  // Generate random password helper
   const handleGeneratePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*'
     let generated = 'LB-'
@@ -404,7 +393,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     setFormData((prev) => ({ ...prev, password: generated }))
   }
 
-  // Handle Add User
   const handleCreateUser = (e) => {
     e.preventDefault()
     const cleanUser = formData.username.trim().toLowerCase()
@@ -437,19 +425,16 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       email: formData.email.trim() || `${cleanUser}@luckybetplay.ph`,
     }
 
-    // Unmark in case this username was previously deleted
     unmarkDeletedUsername(cleanUser)
 
     const updated = [newUser, ...users]
     setUsers(updated)
     saveRbacUsers(updated)
 
-    // Save directly to Supabase dedicated table
     if (isSupabaseConfigured) {
       saveRbacUserToSupabase(newUser).catch(() => {})
     }
 
-    // Audit log
     const updatedLogs = addAuditLog(
       'RBAC_USER_CREATED',
       `New user credential ${cleanUser} (${roleDef.label}) created by ${currentUser?.username || 'admin'}`,
@@ -472,7 +457,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     showNotification(`User credential "${cleanUser}" successfully created!`)
   }
 
-  // Handle Edit User
   const handleUpdateUser = (e) => {
     e.preventDefault()
     if (!editingUser) return
@@ -514,7 +498,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     showNotification(`Credentials for "${editingUser.username}" saved!`)
   }
 
-  // Handle Deactivate / Activate User Toggle
   const handleToggleUserStatus = async (targetUser) => {
     if (!targetUser) return
     if (targetUser.username === 'admin') {
@@ -525,7 +508,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     const nextStatus = targetUser.status === 'suspended' ? 'active' : 'suspended'
     const isNowDeactivated = nextStatus === 'suspended'
 
-    // 1. Update in local state & cache
     const updated = users.map((u) => {
       if (u.id === targetUser.id || u.username.toLowerCase() === targetUser.username.toLowerCase()) {
         return { ...u, status: nextStatus }
@@ -535,7 +517,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     setUsers(updated)
     saveRbacUsers(updated)
 
-    // 2. Persist update directly to cloud table
     if (isSupabaseConfigured) {
       const updatedUser = updated.find(
         (u) => u.id === targetUser.id || u.username.toLowerCase() === targetUser.username.toLowerCase()
@@ -547,7 +528,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       }
     }
 
-    // 3. Security Audit log
     const updatedLogs = addAuditLog(
       isNowDeactivated ? 'RBAC_USER_DEACTIVATED' : 'RBAC_USER_ACTIVATED',
       `Account @${targetUser.username} was ${isNowDeactivated ? 'deactivated' : 'reactivated'} by ${currentUser?.username || 'admin'}`,
@@ -563,7 +543,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     )
   }
 
-  // Handle Delete User
   const handleDeleteUser = async () => {
     if (!deletingUser || isDeleting) return
     if (deletingUser.username === 'admin') {
@@ -577,15 +556,12 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     setIsDeleting(true)
 
     try {
-      // 1. Immediately blacklist in persistent deleted list so localStorage never resurrects it
       recordDeletedUsername(cleanUser)
 
-      // 2. Remove from active state and local cache
       const updated = users.filter((u) => u.id !== targetUser.id && u.username.toLowerCase() !== cleanUser)
       setUsers(updated)
       saveRbacUsers(updated)
 
-      // 3. Delete permanently from cloud directory table
       if (isSupabaseConfigured) {
         const delRes = await deleteRbacUserFromSupabase(targetUser.id, targetUser.username)
         if (!delRes.success) {
@@ -593,7 +569,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         }
       }
 
-      // 4. Audit log
       const updatedLogs = addAuditLog(
         'RBAC_USER_DELETED',
         `Account ${cleanUser} was permanently deleted by ${currentUser?.username || 'admin'}`,
@@ -612,7 +587,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     }
   }
 
-  // Toggle permission in the matrix by Role Tier
   const handleTogglePermission = (roleKey, permKey) => {
     const currentRole = roles[roleKey]
     if (!currentRole) return
@@ -623,7 +597,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     const isTab = permMeta.type === 'tab'
     const isFeature = permMeta.type === 'feature'
 
-    // RULE 1: IF TOGGLING ON A FEATURE WHOSE PARENT TAB IS DISABLED
     if (!isCurrentlyGranted && isFeature) {
       if (areFeatureParentTabsDisabled(permKey, currentPerms)) {
         showNotification({
@@ -641,7 +614,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       }
     }
 
-    // RULE 2: IF TOGGLING OFF A TAB, CHECK FOR DEPENDENT FEATURES
     let nextPerms = []
     let autoDisabledFeatures = []
 
@@ -670,9 +642,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
 
     const affectedUsers = users.filter((u) => u.role === roleKey).map((u) => u.name).join(', ')
 
-    // AUDIT LOG & DETAILED USER NOTIFICATION (ENGLISH)
     if (isCurrentlyGranted) {
-      // Disabled action
       if (isTab) {
         addAuditLog(
           'RBAC_TAB_DISABLED',
@@ -707,7 +677,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         })
       }
     } else {
-      // Enabled action
       if (isTab) {
         addAuditLog(
           'RBAC_TAB_ENABLED',
@@ -743,7 +712,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     }
   }
 
-  // Toggle permission specifically for an individual Account ("depende sa account")
   const handleToggleAccountPermission = (targetUser, permKey) => {
     const currentPerms = getUserEffectivePermissions(targetUser, roles)
     const isCurrentlyGranted = currentPerms.includes(permKey)
@@ -751,7 +719,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     const isTab = permMeta.type === 'tab'
     const isFeature = permMeta.type === 'feature'
 
-    // RULE 1: IF TOGGLING ON A FEATURE WHOSE PARENT TAB IS DISABLED FOR THIS ACCOUNT
     if (!isCurrentlyGranted && isFeature) {
       if (areFeatureParentTabsDisabled(permKey, currentPerms)) {
         showNotification({
@@ -763,7 +730,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       }
     }
 
-    // RULE 2: IF TOGGLING OFF A TAB, CHECK FOR DEPENDENT FEATURES
     let nextPerms = []
     let autoDisabledFeatures = []
 
@@ -782,7 +748,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     setUserCustomPermissions(targetUser.username, nextPerms)
     setAccountPermsRev((prev) => prev + 1)
 
-    // AUDIT LOG & NOTIFICATIONS (ENGLISH)
     if (isCurrentlyGranted) {
       if (isTab) {
         addAuditLog(
@@ -853,7 +818,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
     }
   }
 
-  // Reset custom permissions for an individual account back to role defaults
   const handleResetAccountPermissions = (targetUser) => {
     clearUserCustomPermissions(targetUser.username)
     setAccountPermsRev((prev) => prev + 1)
@@ -871,7 +835,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
   const [showResetRolesConfirm, setShowResetRolesConfirm] = useState(false)
   const [isResettingRoles, setIsResettingRoles] = useState(false)
 
-  // Reset Role Matrix to Defaults
   const handleResetRoles = () => {
     setShowResetRolesConfirm(true)
   }
@@ -887,7 +850,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
 
   return (
     <div className="rbac-management-view">
-      {/* View Header & KPIs */}
+      {}
       <div className="rbac-header-card">
         <div className="rbac-header-titles">
           <div className="rbac-eyebrow-chip">
@@ -967,7 +930,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* Interactive Active Test Session Simulator Bar (Admin Only) */}
+      {}
       {canSwitchAccounts && (
         <div className="rbac-simulator-bar">
           <div className="simulator-label-group">
@@ -1020,7 +983,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* Navigation Sub-Tabs */}
+      {}
       <div className="rbac-nav-tabs-bar">
         <div className="rbac-tabs-left">
           <button
@@ -1091,9 +1054,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         )}
       </div>
 
-      {/* ===================================================================== */}
-      {/* TAB 1: USER CREDENTIALS LIST                                         */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {activeTab === 'users' && (
         <div className="rbac-content-container">
           <div className="rbac-users-grid">
@@ -1254,9 +1217,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* TAB 2: ROLE & ACCOUNT PERMISSIONS MATRIX                              */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {activeTab === 'matrix' && (
         <div className="rbac-matrix-container">
           <div className="rbac-matrix-header-box">
@@ -1302,7 +1265,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
             </div>
           </div>
 
-          {/* Mode Selector: By Role Tier vs By Individual Account */}
+          {}
           <div className="rbac-matrix-mode-bar">
             <div className="matrix-mode-toggle-group">
               <button
@@ -1330,7 +1293,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
           </div>
 
           {matrixViewMode === 'roles' ? (
-            /* MODE 1: MATRIX BY ROLE TIER */
             <div className="rbac-matrix-table-wrap">
               <table className="rbac-matrix-table">
                 <thead>
@@ -1369,7 +1331,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                   </tr>
                 </thead>
                 <tbody>
-                  {/* SECTION 1: WORKSPACE TABS */}
+                  {}
                   <tr className="matrix-section-divider-row section-tabs-row">
                     <td colSpan={1 + Object.keys(roles).length}>
                       <div className="matrix-section-banner">
@@ -1429,7 +1391,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                     </tr>
                   ))}
 
-                  {/* SECTION 2: IN-TAB FEATURES */}
+                  {}
                   <tr className="matrix-section-divider-row section-features-row">
                     <td colSpan={1 + Object.keys(roles).length}>
                       <div className="matrix-section-banner">
@@ -1505,7 +1467,6 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
               </table>
             </div>
           ) : (
-            /* MODE 2: MATRIX BY SPECIFIC ACCOUNT ("By Individual Account") */
             <div className="rbac-matrix-table-wrap">
               <table className="rbac-matrix-table account-matrix-table">
                 <thead>
@@ -1560,7 +1521,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                   </tr>
                 </thead>
                 <tbody>
-                  {/* SECTION 1: WORKSPACE TABS */}
+                  {}
                   <tr className="matrix-section-divider-row section-tabs-row">
                     <td colSpan={1 + users.length}>
                       <div className="matrix-section-banner">
@@ -1624,7 +1585,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                     </tr>
                   ))}
 
-                  {/* SECTION 2: IN-TAB FEATURES */}
+                  {}
                   <tr className="matrix-section-divider-row section-features-row">
                     <td colSpan={1 + users.length}>
                       <div className="matrix-section-banner">
@@ -1707,9 +1668,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* TAB 3: AUDIT & SECURITY LOGS                                         */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {activeTab === 'logs' && (
         <div className="rbac-audit-container">
           <div className="rbac-audit-header-box">
@@ -1739,9 +1700,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* MODAL: ADD NEW USER CREDENTIAL                                       */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {isAddModalOpen && (
         <div
           className="rbac-modal-backdrop"
@@ -1877,9 +1838,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* MODAL: EDIT USER CREDENTIAL                                          */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {editingUser && (
         <div
           className="rbac-modal-backdrop"
@@ -1981,9 +1942,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* MODAL: DELETE CONFIRMATION                                           */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {deletingUser && (
         <div
           className="rbac-modal-backdrop"
@@ -2031,9 +1992,9 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* MODAL: CLOUD DATABASE SQL SETUP HELPER                               */}
-      {/* ===================================================================== */}
+      {}
+      {}
+      {}
       {showSqlModal && (
         <div className="rbac-modal-backdrop" onClick={() => setShowSqlModal(false)}>
           <div className="rbac-modal-window modal-sql-setup" onClick={(e) => e.stopPropagation()}>
@@ -2085,7 +2046,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
         </div>
       )}
 
-      {/* Confirmation Modal for Resetting Role Matrix */}
+      {}
       <ConfirmActionModal
         isOpen={showResetRolesConfirm}
         title="Reset Role Permissions Matrix?"

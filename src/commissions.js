@@ -1,36 +1,27 @@
-// src/commissions.js - Hierarchical Commission Store & Calculation Service for Glowing Fortune Corporation
 import { saveSupabaseCommissionSettings } from './supabase.js'
 
-const COMMISSIONS_STORAGE_KEY = 'luckybet_commission_settings'
-const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
-
 export const DEFAULT_COMMISSION_CONFIG = {
-  globalDefaultRate: 10.0, // Baseline 10%
+  globalDefaultRate: 10.0,
   supervisors: {},
 }
 
-/**
- * Loads commission settings from localStorage with fallbacks
- */
-export function loadCommissionSettings() {
-  if (!isBrowser) return { ...DEFAULT_COMMISSION_CONFIG }
-  try {
-    const raw = localStorage.getItem(COMMISSIONS_STORAGE_KEY)
-    if (!raw) return { ...DEFAULT_COMMISSION_CONFIG }
-    const parsed = JSON.parse(raw)
-    return {
-      globalDefaultRate: Number(parsed.globalDefaultRate) || 10.0,
-      supervisors: parsed.supervisors && typeof parsed.supervisors === 'object' ? parsed.supervisors : {},
-    }
-  } catch (err) {
-    console.error('Failed to load commission settings:', err)
-    return { ...DEFAULT_COMMISSION_CONFIG }
+let inMemoryCommissionConfig = { ...DEFAULT_COMMISSION_CONFIG }
+
+export function setInMemoryCommissionSettings(settings) {
+  if (!settings || typeof settings !== 'object') return
+  inMemoryCommissionConfig = {
+    globalDefaultRate: Number(settings.globalDefaultRate) || 10.0,
+    supervisors: settings.supervisors && typeof settings.supervisors === 'object' ? settings.supervisors : {},
   }
 }
 
-/**
- * Saves commission settings and triggers cross-tab/cross-component update event
- */
+export function loadCommissionSettings() {
+  return {
+    globalDefaultRate: Number(inMemoryCommissionConfig.globalDefaultRate) || 10.0,
+    supervisors: inMemoryCommissionConfig.supervisors ? { ...inMemoryCommissionConfig.supervisors } : {},
+  }
+}
+
 export function saveCommissionSettings(settings) {
   try {
     const payload = {
@@ -38,12 +29,15 @@ export function saveCommissionSettings(settings) {
       supervisors: settings.supervisors || {},
       updatedAt: new Date().toISOString(),
     }
-    if (isBrowser) {
-      localStorage.setItem(COMMISSIONS_STORAGE_KEY, JSON.stringify(payload))
+    inMemoryCommissionConfig = {
+      globalDefaultRate: payload.globalDefaultRate,
+      supervisors: payload.supervisors,
+    }
+
+    if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('luckybet_commissions_updated', { detail: payload }))
     }
 
-    // Asynchronously synchronize online to Supabase Cloud
     saveSupabaseCommissionSettings(payload).catch((err) => {
       console.warn('Supabase cloud commission settings sync failed:', err)
     })
@@ -55,10 +49,6 @@ export function saveCommissionSettings(settings) {
   }
 }
 
-/**
- * Resolves effective commission rate for an agent under a given supervisor
- * Priority: Agent Override > Supervisor Default > Global Default (10%)
- */
 export function getAgentCommissionRate(supervisorName, agentKey, settings = null) {
   const currentSettings = settings || loadCommissionSettings()
   const globalDefault = Number(currentSettings.globalDefaultRate) || 10.0
@@ -70,7 +60,6 @@ export function getAgentCommissionRate(supervisorName, agentKey, settings = null
     ? Number(spvrConfig.defaultRate)
     : globalDefault
 
-  // Check for specific agent override
   if (spvrConfig?.agentOverrides && spvrConfig.agentOverrides[agtKey] !== undefined && spvrConfig.agentOverrides[agtKey] !== null) {
     const overrideRate = Number(spvrConfig.agentOverrides[agtKey])
     if (!isNaN(overrideRate) && overrideRate >= 0) {
@@ -83,7 +72,6 @@ export function getAgentCommissionRate(supervisorName, agentKey, settings = null
     }
   }
 
-  // Fallback to supervisor default
   return {
     rate: spvrDefault,
     isOverride: false,
@@ -92,9 +80,6 @@ export function getAgentCommissionRate(supervisorName, agentKey, settings = null
   }
 }
 
-/**
- * Updates default commission rate for a supervisor
- */
 export function updateSupervisorDefaultRate(supervisorName, newRate, currentSettings = null) {
   const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
   const spvrKey = String(supervisorName || '').trim().toUpperCase()
@@ -117,9 +102,6 @@ export function updateSupervisorDefaultRate(supervisorName, newRate, currentSett
   return settings
 }
 
-/**
- * Sets custom commission override rate for a specific agent under a supervisor
- */
 export function setAgentOverride(supervisorName, agentKey, overrideRate, currentSettings = null) {
   const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
   const spvrKey = String(supervisorName || '').trim().toUpperCase()
@@ -147,9 +129,8 @@ export function setAgentOverride(supervisorName, agentKey, overrideRate, current
   return settings
 }
 
-/**
- * Removes agent override and reverts agent to supervisor's default rate
- */
+export const updateAgentOverrideRate = setAgentOverride
+
 export function removeAgentOverride(supervisorName, agentKey, currentSettings = null) {
   const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
   const spvrKey = String(supervisorName || '').trim().toUpperCase()
@@ -168,9 +149,6 @@ export function removeAgentOverride(supervisorName, agentKey, currentSettings = 
   return settings
 }
 
-/**
- * Resets all overrides for a supervisor
- */
 export function resetSupervisorOverrides(supervisorName, currentSettings = null) {
   const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
   const spvrKey = String(supervisorName || '').trim().toUpperCase()
@@ -184,4 +162,27 @@ export function resetSupervisorOverrides(supervisorName, currentSettings = null)
   }
 
   return settings
+}
+
+export function calculateCommissionDeduction(supervisorName, agentKey, grossAmount, settings = null) {
+  const gross = Number(grossAmount) || 0
+  if (gross <= 0) {
+    return {
+      rate: 0,
+      commission: 0,
+      remittanceDue: 0,
+      isOverride: false,
+    }
+  }
+
+  const { rate, isOverride } = getAgentCommissionRate(supervisorName, agentKey, settings)
+  const commission = (gross * rate) / 100
+  const remittanceDue = gross - commission
+
+  return {
+    rate,
+    commission,
+    remittanceDue,
+    isOverride,
+  }
 }

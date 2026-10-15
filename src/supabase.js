@@ -1,10 +1,9 @@
-// src/supabase.js - Dedicated Supabase Client & Database Table Layer
 import { createClient } from '@supabase/supabase-js'
+import { setInMemoryRoles, setInMemoryUserPerms, setInMemoryUsers } from './rbac.js'
+import { setInMemoryCommissionSettings } from './commissions.js'
 
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
 
-// Load Supabase credentials exclusively from environment variables (.env / .env.local)
-// Never commit or hardcode credentials directly in source files.
 const supabaseUrl = (env.VITE_SUPABASE_URL || '').trim()
 const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY || '').trim()
 
@@ -19,7 +18,7 @@ if (!isSupabaseConfigured && typeof console !== 'undefined' && env.DEV) {
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: true,
+      persistSession: false,
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
@@ -28,24 +27,12 @@ export const supabase = isSupabaseConfigured
 
 export const RBAC_TABLE_NAME = 'rbac_users'
 
-/**
- * Normalize an identifier to an email address format suitable for Supabase Auth.
- */
 export function formatSupabaseEmail(identifier) {
   const clean = String(identifier || '').trim().toLowerCase()
   if (clean.includes('@')) return clean
   return `${clean}@luckybetplay.ph`
 }
 
-// =============================================================================
-// DEDICATED TABLE AUTHENTICATION & RBAC DIRECTORY
-// =============================================================================
-
-/**
- * Verify username and password strictly against the Supabase 'rbac_users' table.
- * If user is not found in the table, or password doesn't match, or is suspended,
- * access is explicitly denied.
- */
 export async function verifyCredentialsInSupabaseTable(username, password) {
   if (!supabase) {
     return { success: false, error: 'Supabase client is not configured' }
@@ -69,7 +56,6 @@ export async function verifyCredentialsInSupabaseTable(username, password) {
       .ilike('username', cleanUser)
       .limit(1)
 
-    // Table has not been created yet in PostgreSQL
     if (error) {
       const isMissingTable =
         error.code === 'PGRST205' ||
@@ -82,7 +68,6 @@ export async function verifyCredentialsInSupabaseTable(username, password) {
       }
     }
 
-    // Account not found in directory
     if (!data || data.length === 0) {
       return {
         success: false,
@@ -93,7 +78,6 @@ export async function verifyCredentialsInSupabaseTable(username, password) {
 
     const account = data[0]
 
-    // Account status check
     if (account.status === 'suspended' || account.status === 'inactive' || account.status === 'system') {
       return {
         success: false,
@@ -102,7 +86,6 @@ export async function verifyCredentialsInSupabaseTable(username, password) {
       }
     }
 
-    // Strict Password Verification
     if (account.password !== cleanPass) {
       return {
         success: false,
@@ -111,13 +94,12 @@ export async function verifyCredentialsInSupabaseTable(username, password) {
       }
     }
 
-    // Update last_login timestamp asynchronously
     supabase
       .from(RBAC_TABLE_NAME)
       .update({ last_login: new Date().toISOString() })
       .eq('id', account.id)
-      .then(() => { })
-      .catch(() => { })
+      .then(() => void 0)
+      .catch(() => void 0)
 
     return {
       success: true,
@@ -148,14 +130,20 @@ export const MATRIX_REALTIME_CHANNEL = 'rbac-matrix-realtime'
 
 let realtimeChannelInstance = null
 
-/**
- * Fetch matrix configuration (role permissions and user custom permissions) from Supabase.
- * Checks dedicated 'rbac_matrix_config' table first; falls back to system row in 'rbac_users'.
- */
 export async function getSupabaseMatrixConfig() {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'get_matrix')
+      const res = await fetch(u)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.success && json.config) return { success: true, config: json.config }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
-    // 1. Try dedicated table first
     const { data: tableData, error: tableErr } = await supabase
       .from('rbac_matrix_config')
       .select('config')
@@ -166,7 +154,6 @@ export async function getSupabaseMatrixConfig() {
       return { success: true, config: tableData.config, source: 'rbac_matrix_config' }
     }
 
-    // 2. Fallback to protected system row in rbac_users
     const { data: userData, error: userErr } = await supabase
       .from(RBAC_TABLE_NAME)
       .select('email')
@@ -188,35 +175,49 @@ export async function getSupabaseMatrixConfig() {
   }
 }
 
-/**
- * Save matrix configuration (roles permissions + user custom permissions) to Supabase.
- * Saves to both dedicated table (if present) and fallback system row in rbac_users.
- */
 export async function saveSupabaseMatrixConfig(config) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'save_matrix')
+      const pRes = await fetch(u, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+      if (pRes.ok) {
+        if (realtimeChannelInstance) {
+          realtimeChannelInstance.send({
+            type: 'broadcast',
+            event: 'matrix_updated',
+            payload: { timestamp: Date.now() },
+          }).catch(() => void 0)
+        }
+        return { success: true, source: 'proxy' }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
-    const payloadWithTimestamp = {
-      ...config,
+    const payload = {
+      roles: config.roles || {},
+      userPerms: config.userPerms || {},
       updatedAt: new Date().toISOString(),
     }
 
     let savedToTable = false
 
-    // 1. Attempt save to dedicated table
     try {
       const { error: tableErr } = await supabase
         .from('rbac_matrix_config')
         .upsert({
           id: MATRIX_CONFIG_ID,
-          config: payloadWithTimestamp,
+          config: payload,
           updated_at: new Date().toISOString(),
         })
-      if (!tableErr) {
-        savedToTable = true
-      }
-    } catch { }
+      if (!tableErr) savedToTable = true
+    } catch (err) { void err }
 
-    // 2. Only fallback to system row in rbac_users if dedicated table is not present
     let userErr = null
     if (!savedToTable) {
       const sysRow = {
@@ -228,8 +229,8 @@ export async function saveSupabaseMatrixConfig(config) {
         role_label: 'System Config',
         branch: 'System',
         status: 'system',
-        avatar: 'CF',
-        email: JSON.stringify(payloadWithTimestamp),
+        avatar: 'MX',
+        email: JSON.stringify(payload),
       }
 
       const res = await supabase
@@ -238,7 +239,6 @@ export async function saveSupabaseMatrixConfig(config) {
       userErr = res.error
     }
 
-    // 3. Broadcast real-time change to all connected clients
     try {
       if (realtimeChannelInstance) {
         realtimeChannelInstance.send({
@@ -247,7 +247,7 @@ export async function saveSupabaseMatrixConfig(config) {
           payload: { timestamp: Date.now() },
         })
       }
-    } catch { }
+    } catch (err) { void err }
 
     if (savedToTable || !userErr) {
       return { success: true, source: savedToTable ? 'rbac_matrix_config' : 'rbac_users_fallback' }
@@ -259,9 +259,6 @@ export async function saveSupabaseMatrixConfig(config) {
   }
 }
 
-/**
- * Synchronize cloud matrix permissions from Supabase into local storage and trigger UI re-render.
- */
 export async function syncMatrixPermissionsFromSupabase() {
   if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' }
   try {
@@ -271,24 +268,16 @@ export async function syncMatrixPermissionsFromSupabase() {
       let changed = false
 
       if (roles && typeof roles === 'object') {
-        const currentRolesRaw = localStorage.getItem('luckybet_rbac_roles')
-        const newRolesStr = JSON.stringify(roles)
-        if (currentRolesRaw !== newRolesStr) {
-          localStorage.setItem('luckybet_rbac_roles', newRolesStr)
-          changed = true
-        }
+        setInMemoryRoles(roles)
+        changed = true
       }
 
       if (userPerms && typeof userPerms === 'object') {
-        const currentUserPermsRaw = localStorage.getItem('luckybet_rbac_user_perms')
-        const newUserPermsStr = JSON.stringify(userPerms)
-        if (currentUserPermsRaw !== newUserPermsStr) {
-          localStorage.setItem('luckybet_rbac_user_perms', newUserPermsStr)
-          changed = true
-        }
+        setInMemoryUserPerms(userPerms)
+        changed = true
       }
 
-      if (changed) {
+      if (changed && typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('luckybet_rbac_change', {
             detail: { roles, userPerms, source: 'supabase_sync' },
@@ -308,13 +297,20 @@ export async function syncMatrixPermissionsFromSupabase() {
 export const COMMISSIONS_CONFIG_ID = 'commissions_config'
 export const COMMISSIONS_CONFIG_SYS_ID = '__sys_commissions_config__'
 
-/**
- * Fetch hierarchical commission settings (supervisor default rates and individual agent overrides) from Supabase.
- */
 export async function getSupabaseCommissionSettings() {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'get_commissions')
+      const res = await fetch(u)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.success && json.settings) return { success: true, settings: json.settings }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
-    // 1. Try dedicated table first
     const { data: tableData, error: tableErr } = await supabase
       .from('rbac_matrix_config')
       .select('config')
@@ -325,7 +321,6 @@ export async function getSupabaseCommissionSettings() {
       return { success: true, settings: tableData.config, source: 'rbac_matrix_config' }
     }
 
-    // 2. Fallback to system row in rbac_users
     const { data: userData, error: userErr } = await supabase
       .from(RBAC_TABLE_NAME)
       .select('email')
@@ -347,10 +342,28 @@ export async function getSupabaseCommissionSettings() {
   }
 }
 
-/**
- * Save hierarchical commission settings to Supabase.
- */
 export async function saveSupabaseCommissionSettings(settings) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'save_commissions')
+      const pRes = await fetch(u, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      if (pRes.ok) {
+        if (realtimeChannelInstance) {
+          realtimeChannelInstance.send({
+            type: 'broadcast',
+            event: 'commissions_updated',
+            payload: { timestamp: Date.now() },
+          }).catch(() => void 0)
+        }
+        return { success: true, source: 'proxy' }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
     const payload = {
@@ -361,7 +374,6 @@ export async function saveSupabaseCommissionSettings(settings) {
 
     let savedToTable = false
 
-    // 1. Attempt save to dedicated table
     try {
       const { error: tableErr } = await supabase
         .from('rbac_matrix_config')
@@ -371,9 +383,8 @@ export async function saveSupabaseCommissionSettings(settings) {
           updated_at: new Date().toISOString(),
         })
       if (!tableErr) savedToTable = true
-    } catch { }
+    } catch (err) { void err }
 
-    // 2. Only fallback to system row in rbac_users if dedicated table is not present
     let userErr = null
     if (!savedToTable) {
       const sysRow = {
@@ -395,7 +406,6 @@ export async function saveSupabaseCommissionSettings(settings) {
       userErr = res.error
     }
 
-    // 3. Broadcast real-time change to all connected clients
     try {
       if (realtimeChannelInstance) {
         realtimeChannelInstance.send({
@@ -404,7 +414,7 @@ export async function saveSupabaseCommissionSettings(settings) {
           payload: { timestamp: Date.now() },
         })
       }
-    } catch { }
+    } catch (err) { void err }
 
     if (savedToTable || !userErr) {
       return { success: true, source: savedToTable ? 'rbac_matrix_config' : 'rbac_users_fallback' }
@@ -416,25 +426,14 @@ export async function saveSupabaseCommissionSettings(settings) {
   }
 }
 
-/**
- * Synchronize cloud commission settings from Supabase into local storage and trigger UI re-render.
- */
 export async function syncCommissionSettingsFromSupabase() {
   if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' }
   try {
     const res = await getSupabaseCommissionSettings()
     if (res.success && res.settings) {
-      const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
-      let changed = false
+      setInMemoryCommissionSettings(res.settings)
 
-      if (isBrowser) {
-        const currentRaw = localStorage.getItem('luckybet_commission_settings')
-        const newStr = JSON.stringify(res.settings)
-        if (currentRaw !== newStr) {
-          localStorage.setItem('luckybet_commission_settings', newStr)
-          changed = true
-        }
-
+      if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('luckybet_commissions_updated', {
             detail: res.settings,
@@ -443,7 +442,7 @@ export async function syncCommissionSettingsFromSupabase() {
         )
       }
 
-      return { success: true, settings: res.settings, changed }
+      return { success: true, settings: res.settings, changed: true }
     }
     return { success: false, error: res.error }
   } catch (err) {
@@ -452,74 +451,97 @@ export async function syncCommissionSettingsFromSupabase() {
   }
 }
 
-/**
- * Subscribe to real-time matrix & commission changes across all browsers and devices.
- */
-export function subscribeToMatrixRealtime(onUpdate) {
-  if (!supabase) return () => { }
+const matrixListeners = new Set()
+let matrixChannel = null
+
+function ensureMatrixChannel() {
+  if (!supabase) return null
+  if (matrixChannel) return matrixChannel
 
   try {
     const channel = supabase.channel(MATRIX_REALTIME_CHANNEL)
-    realtimeChannelInstance = channel
-
     channel
       .on('broadcast', { event: 'matrix_updated' }, () => {
-        if (typeof onUpdate === 'function') onUpdate()
+        matrixListeners.forEach((fn) => {
+          try { fn() } catch (err) { void err }
+        })
       })
       .on('broadcast', { event: 'commissions_updated' }, () => {
-        syncCommissionSettingsFromSupabase().catch(() => { })
+        syncCommissionSettingsFromSupabase().catch(() => void 0)
       })
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: RBAC_TABLE_NAME },
-        (payload) => {
-          if (
-            payload?.new?.id === MATRIX_CONFIG_SYS_ID ||
-            payload?.old?.id === MATRIX_CONFIG_SYS_ID ||
-            payload?.new?.username === MATRIX_CONFIG_SYS_ID
-          ) {
-            if (typeof onUpdate === 'function') onUpdate()
-          }
-          if (
-            payload?.new?.id === COMMISSIONS_CONFIG_SYS_ID ||
-            payload?.old?.id === COMMISSIONS_CONFIG_SYS_ID ||
-            payload?.new?.username === COMMISSIONS_CONFIG_SYS_ID
-          ) {
-            syncCommissionSettingsFromSupabase().catch(() => { })
-          }
-        }
-      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rbac_matrix_config' },
         (payload) => {
-          if (payload?.new?.id === COMMISSIONS_CONFIG_ID || payload?.old?.id === COMMISSIONS_CONFIG_ID) {
-            syncCommissionSettingsFromSupabase().catch(() => { })
+          if (payload?.new?.id === COMMISSIONS_CONFIG_ID) {
+            syncCommissionSettingsFromSupabase().catch(() => void 0)
           } else {
-            if (typeof onUpdate === 'function') onUpdate()
+            matrixListeners.forEach((fn) => {
+              try { fn() } catch (err) { void err }
+            })
           }
         }
       )
-      .subscribe()
-
-    return () => {
-      try {
-        supabase.removeChannel(channel)
-        if (realtimeChannelInstance === channel) {
-          realtimeChannelInstance = null
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: RBAC_TABLE_NAME },
+        (payload) => {
+          const rowId = payload?.new?.id || payload?.old?.id
+          if (rowId === COMMISSIONS_CONFIG_SYS_ID) {
+            syncCommissionSettingsFromSupabase().catch(() => void 0)
+          } else if (rowId === MATRIX_CONFIG_SYS_ID) {
+            matrixListeners.forEach((fn) => {
+              try { fn() } catch (err) { void err }
+            })
+          }
         }
-      } catch { }
-    }
-  } catch (err) {
-    console.warn('Realtime subscription setup error:', err)
-    return () => { }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          realtimeChannelInstance = channel
+        }
+      })
+
+    matrixChannel = channel
+    return matrixChannel
+  } catch {
+    return null
   }
 }
 
-/**
- * Fetch all authorized accounts from Supabase 'rbac_users' table.
- */
+export function initSupabaseMatrixRealtime(onMatrixUpdate) {
+  return subscribeToMatrixRealtime(onMatrixUpdate)
+}
+
+export function subscribeToMatrixRealtime(callback) {
+  if (typeof callback !== 'function') return () => { }
+  matrixListeners.add(callback)
+  ensureMatrixChannel()
+
+  return () => {
+    matrixListeners.delete(callback)
+    if (matrixListeners.size === 0 && matrixChannel && supabase) {
+      try {
+        supabase.removeChannel(matrixChannel)
+      } catch (err) { void err }
+      matrixChannel = null
+      realtimeChannelInstance = null
+    }
+  }
+}
+
 export async function getSupabaseRbacUsers() {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'get_users')
+      const res = await fetch(u)
+      if (res.ok) {
+        const json = await res.json()
+        if (json.success && Array.isArray(json.data)) return { success: true, data: json.data }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, data: [] }
   try {
     const { data, error } = await supabase
@@ -536,7 +558,6 @@ export async function getSupabaseRbacUsers() {
       }
     }
 
-    // Exclude protected system configuration rows
     const normalized = (data || [])
       .filter(
         (row) =>
@@ -565,10 +586,22 @@ export async function getSupabaseRbacUsers() {
   }
 }
 
-/**
- * Insert or update an account in Supabase 'rbac_users' table.
- */
 export async function saveRbacUserToSupabase(user) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'save_user')
+      const pRes = await fetch(u, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      })
+      if (pRes.ok) {
+        const json = await pRes.json()
+        return { success: true, data: json.data }
+      }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase is not configured' }
   try {
     const payload = {
@@ -598,10 +631,17 @@ export async function saveRbacUserToSupabase(user) {
   }
 }
 
-/**
- * Delete an account from Supabase 'rbac_users' table.
- */
 export async function deleteRbacUserFromSupabase(id, username) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'delete_user')
+      if (id) u.searchParams.set('id', id)
+      if (username) u.searchParams.set('username', username)
+      const pRes = await fetch(u)
+      if (pRes.ok) return { success: true }
+    } catch (err) { void err }
+  }
   if (!supabase) return { success: false, error: 'Supabase is not configured' }
   try {
     const cleanUser = username ? String(username).trim().toLowerCase() : ''
@@ -625,19 +665,14 @@ export async function deleteRbacUserFromSupabase(id, username) {
     const { error } = await query
 
     if (error) {
-      console.error('Supabase delete error:', error)
       return { success: false, error: error.message }
     }
     return { success: true }
   } catch (err) {
-    console.error('Supabase delete exception:', err)
     return { success: false, error: err.message }
   }
 }
 
-/**
- * Seed initial default users into the table if empty.
- */
 export async function seedDefaultUsersToSupabase(defaultUsers) {
   if (!supabase || !Array.isArray(defaultUsers) || defaultUsers.length === 0) return
   try {
@@ -651,47 +686,50 @@ export async function seedDefaultUsersToSupabase(defaultUsers) {
       branch: u.branch,
       status: u.status || 'active',
       avatar: u.avatar,
-      email: u.email,
+      email: u.email || `${u.username}@luckybetplay.ph`,
     }))
 
     await supabase.from(RBAC_TABLE_NAME).upsert(rows, { onConflict: 'username' })
-  } catch { }
+  } catch (err) { void err }
 }
 
-// =============================================================================
-// SUPABASE AUTH (OAuth / Email fallback)
-// =============================================================================
-
-export async function signInWithSupabase(identifier, password) {
+export async function signInWithSupabase(username, password) {
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
-  const email = formatSupabaseEmail(identifier)
-
   try {
+    const email = formatSupabaseEmail(username)
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, user: data.user, session: data.session }
+    if (error) {
+      return { success: false, error: error.message }
+    }
+    return { success: true, session: data.session, user: data.user }
   } catch (err) {
-    return { success: false, error: err.message || 'Supabase authentication failed' }
+    return { success: false, error: err.message }
   }
 }
 
-export async function signUpWithSupabase(email, password, metadata = {}) {
+export async function signUpWithSupabase(username, password, userData = {}) {
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
+    const email = formatSupabaseEmail(username)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: metadata },
+      options: {
+        data: {
+          username,
+          ...userData,
+        },
+      },
     })
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, user: data.user, session: data.session }
+    if (error) {
+      return { success: false, error: error.message }
+    }
+    return { success: true, session: data.session, user: data.user }
   } catch (err) {
-    return { success: false, error: err.message || 'Supabase registration failed' }
+    return { success: false, error: err.message }
   }
 }
 
@@ -716,9 +754,6 @@ export async function getSupabaseSession() {
 
 export const PAYOUT_SHORTAGE_TABLE_NAME = 'payout_shortage_replenishments'
 
-/**
- * Fetch Payout Shortage Replenishments from Supabase database by branch and date.
- */
 export async function getPayoutShortagesFromSupabase(branch, claimDate) {
   if (!supabase) return { success: false, data: [] }
   try {
@@ -761,9 +796,6 @@ export async function getPayoutShortagesFromSupabase(branch, claimDate) {
   }
 }
 
-/**
- * Save / sync Payout Shortage Replenishments to Supabase database for a specific branch and date.
- */
 export async function savePayoutShortagesToSupabase(branch, claimDate, claimsArray) {
   if (!supabase) return { success: false, error: 'Supabase client is not configured' }
   try {
@@ -813,9 +845,6 @@ export async function savePayoutShortagesToSupabase(branch, claimDate, claimsArr
   }
 }
 
-/**
- * Delete a specific Payout Shortage Replenishment record from Supabase by ID.
- */
 export async function deletePayoutShortageRowFromSupabase(id) {
   if (!supabase || !id) return { success: false, error: 'Supabase client is not configured' }
   try {
@@ -836,7 +865,240 @@ export async function deletePayoutShortageRowFromSupabase(id) {
   }
 }
 
-// Backwards compatibility exports
 export const getCashierClaimsFromSupabase = getPayoutShortagesFromSupabase
 export const saveCashierClaimsToSupabase = savePayoutShortagesToSupabase
 export const deleteCashierClaimFromSupabase = deletePayoutShortageRowFromSupabase
+
+export const ACTIVE_SESSIONS_CONFIG_ID = 'active_sessions'
+
+export function getSessionTokenFromUrl() {
+  if (typeof window === 'undefined') return null
+  try {
+    if (window.name && window.name.startsWith('ses_')) {
+      return window.name
+    }
+    if (window.name) {
+      try {
+        const parsed = JSON.parse(window.name)
+        if (parsed?.token) return parsed.token
+      } catch (err) { void err }
+    }
+  } catch (err) { void err }
+
+  const hash = window.location.hash || ''
+  const match = hash.match(/session=([^&]+)/)
+  if (match) {
+    const token = decodeURIComponent(match[1])
+    try { window.name = token } catch (err) { void err }
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    } catch (err) { void err }
+    return token
+  }
+
+  return null
+}
+
+export function setSessionTokenInUrl(token) {
+  if (typeof window === 'undefined') return
+  try {
+    window.name = token || ''
+  } catch (err) { void err }
+
+  if (window.location.hash.includes('session=')) {
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search)
+    } catch (err) { void err }
+  }
+}
+
+export async function createCloudSession(user) {
+  const token = 'ses_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9)
+  const sessionUser = {
+    ...user,
+    token,
+    lastActive: new Date().toISOString(),
+  }
+
+  setSessionTokenInUrl(token)
+
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'create_session')
+      const pRes = await fetch(u, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionUser),
+      })
+      if (pRes.ok) return sessionUser
+    } catch (err) { void err }
+  }
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('rbac_matrix_config')
+        .select('config')
+        .eq('id', ACTIVE_SESSIONS_CONFIG_ID)
+        .maybeSingle()
+
+      const currentSessions = (data?.config && typeof data.config === 'object') ? data.config : {}
+      currentSessions[token] = sessionUser
+
+      await supabase
+        .from('rbac_matrix_config')
+        .upsert({
+          id: ACTIVE_SESSIONS_CONFIG_ID,
+          config: currentSessions,
+          updated_at: new Date().toISOString(),
+        })
+    } catch (err) {
+      console.warn('Failed to persist cloud session to Supabase:', err)
+    }
+  }
+
+  return sessionUser
+}
+
+export async function getCloudSession() {
+  const token = getSessionTokenFromUrl()
+  if (!token) return null
+  if (!supabase) return null
+
+  try {
+    const { data, error } = await supabase
+      .from('rbac_matrix_config')
+      .select('config')
+      .eq('id', ACTIVE_SESSIONS_CONFIG_ID)
+      .maybeSingle()
+
+    if (!error && data?.config && data.config[token]) {
+      return data.config[token]
+    }
+  } catch (err) {
+    console.warn('Failed to retrieve cloud session:', err)
+  }
+
+  setSessionTokenInUrl(null)
+  return null
+}
+
+export async function updateCloudSession(token, updatedUser) {
+  if (!token) return
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'create_session')
+      await fetch(u, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...updatedUser, token }),
+      })
+      return
+    } catch (err) { void err }
+  }
+  if (!token || !supabase) return
+  try {
+    const { data } = await supabase
+      .from('rbac_matrix_config')
+      .select('config')
+      .eq('id', ACTIVE_SESSIONS_CONFIG_ID)
+      .maybeSingle()
+
+    const currentSessions = (data?.config && typeof data.config === 'object') ? data.config : {}
+    currentSessions[token] = {
+      ...currentSessions[token],
+      ...updatedUser,
+      token,
+      lastActive: new Date().toISOString(),
+    }
+
+    await supabase
+      .from('rbac_matrix_config')
+      .upsert({
+        id: ACTIVE_SESSIONS_CONFIG_ID,
+        config: currentSessions,
+        updated_at: new Date().toISOString(),
+      })
+  } catch (err) {
+    console.warn('Failed to update cloud session:', err)
+  }
+}
+
+export async function revokeCloudSession(token) {
+  const targetToken = token || getSessionTokenFromUrl()
+  setSessionTokenInUrl(null)
+
+  if (targetToken && typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'revoke_session')
+      u.searchParams.set('token', targetToken)
+      await fetch(u, { method: 'POST' })
+      return
+    } catch (err) { void err }
+  }
+
+  if (targetToken && supabase) {
+    try {
+      const { data } = await supabase
+        .from('rbac_matrix_config')
+        .select('config')
+        .eq('id', ACTIVE_SESSIONS_CONFIG_ID)
+        .maybeSingle()
+
+      if (data?.config && data.config[targetToken]) {
+        const nextSessions = { ...data.config }
+        delete nextSessions[targetToken]
+
+        await supabase
+          .from('rbac_matrix_config')
+          .upsert({
+            id: ACTIVE_SESSIONS_CONFIG_ID,
+            config: nextSessions,
+            updated_at: new Date().toISOString(),
+          })
+      }
+    } catch (err) { void err }
+  }
+}
+
+export async function bootFromCloud(sessionToken) {
+  if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+    try {
+      const u = new URL('/api/proxy', window.location.origin)
+      u.searchParams.set('action', 'boot')
+      if (sessionToken) u.searchParams.set('token', sessionToken)
+      const res = await fetch(u)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          if (data.matrix) {
+            if (data.matrix.roles) setInMemoryRoles(data.matrix.roles)
+            if (data.matrix.userPerms) setInMemoryUserPerms(data.matrix.userPerms)
+          }
+          if (data.commissions) setInMemoryCommissionSettings(data.commissions)
+          if (Array.isArray(data.users) && data.users.length > 0) setInMemoryUsers(data.users)
+
+          window.dispatchEvent(new CustomEvent('luckybet_rbac_change', { detail: { source: 'boot_proxy' } }))
+          window.dispatchEvent(new CustomEvent('luckybet_commissions_updated', { detail: data.commissions, source: 'boot_proxy' }))
+          return data
+        }
+      }
+    } catch (e) {
+      console.warn('Proxy boot error, falling back:', e)
+    }
+  }
+
+  const [matrixRes, commRes, usersRes] = await Promise.all([
+    syncMatrixPermissionsFromSupabase().catch(() => null),
+    syncCommissionSettingsFromSupabase().catch(() => null),
+    getSupabaseRbacUsers().catch(() => null),
+  ])
+  return {
+    matrix: matrixRes?.config,
+    commissions: commRes?.settings,
+    users: usersRes?.data || [],
+  }
+}

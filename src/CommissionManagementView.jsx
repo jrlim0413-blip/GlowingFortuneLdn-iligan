@@ -1,4 +1,3 @@
-// src/CommissionManagementView.jsx - Hierarchical Agent Commission Management View for Glowing Fortune Corporation
 import React, { useState, useEffect, useMemo } from 'react'
 import {
   loadCommissionSettings,
@@ -134,13 +133,12 @@ export default function CommissionManagementView({
 }) {
   const [settings, setSettings] = useState(() => loadCommissionSettings())
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterMode, setFilterMode] = useState('all') // 'all' | 'overrides' | 'defaults'
+  const [filterMode, setFilterMode] = useState('all') 
   const [editingSpvrKey, setEditingSpvrKey] = useState(null)
   const [tempSpvrRate, setTempSpvrRate] = useState('')
   const [feedbackToast, setFeedbackToast] = useState(null)
   const [expandedSupervisors, setExpandedSupervisors] = useState({})
 
-  // Calculator simulation drawer state
   const [showCalculator, setShowCalculator] = useState(false)
   const [calcGross, setCalcGross] = useState(10000)
   const [calcSpvr, setCalcSpvr] = useState('')
@@ -148,7 +146,6 @@ export default function CommissionManagementView({
 
   const canEdit = can('edit_commissions')
 
-  // Auto-expand all supervisors by default on initial load
   useEffect(() => {
     const initialExpanded = {}
     supervisors.forEach((s) => {
@@ -157,14 +154,12 @@ export default function CommissionManagementView({
     setExpandedSupervisors(initialExpanded)
   }, [supervisors])
 
-  // Auto-sync latest commission settings from Supabase on mount
   useEffect(() => {
     if (isSupabaseConfigured) {
       syncCommissionSettingsFromSupabase().catch(() => {})
     }
   }, [])
 
-  // Listen to cross-component updates
   useEffect(() => {
     const handleUpdate = (e) => {
       if (e?.detail) setSettings(e.detail)
@@ -180,7 +175,6 @@ export default function CommissionManagementView({
     }, 3500)
   }
 
-  // Handle Supervisor Default Rate Update
   const handleSaveSupervisorRate = (spvrName, newRate) => {
     if (!canEdit) {
       showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
@@ -198,20 +192,17 @@ export default function CommissionManagementView({
     showToast(`Updated default agent commission for "${spvrName}" to ${val.toFixed(1)}%.`)
   }
 
-  // Handle Agent Override Toggle
   const handleToggleAgentOverride = (spvrName, agentKey, currentRateInfo) => {
     if (!canEdit) {
       showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
       return
     }
     if (currentRateInfo.isOverride) {
-      // Revert to supervisor default
       const updated = removeAgentOverride(spvrName, agentKey, settings)
       setSettings(updated)
       onRatesUpdated(updated)
       showToast(`Reverted agent "${agentKey}" to Supervisor Default (${currentRateInfo.supervisorDefault.toFixed(1)}%).`)
     } else {
-      // Enable override with current rate as starting point
       const updated = setAgentOverride(spvrName, agentKey, currentRateInfo.rate, settings)
       setSettings(updated)
       onRatesUpdated(updated)
@@ -219,7 +210,6 @@ export default function CommissionManagementView({
     }
   }
 
-  // Handle Agent Override Rate Change
   const handleChangeAgentOverrideRate = (spvrName, agentKey, newRate) => {
     if (!canEdit) {
       showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
@@ -235,7 +225,6 @@ export default function CommissionManagementView({
   const [pendingResetSupervisor, setPendingResetSupervisor] = useState(null)
   const [isResettingSupervisor, setIsResettingSupervisor] = useState(false)
 
-  // Handle Reset All Overrides for a Supervisor
   const handleResetSupervisorOverrides = (spvrName) => {
     if (!canEdit) {
       showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
@@ -256,7 +245,6 @@ export default function CommissionManagementView({
     setPendingResetSupervisor(null)
   }
 
-  // Toggle Collapse/Expand
   const toggleSupervisorExpanded = (spvrName) => {
     setExpandedSupervisors((prev) => ({
       ...prev,
@@ -264,7 +252,6 @@ export default function CommissionManagementView({
     }))
   }
 
-  // Compute stats across all supervisors
   const stats = useMemo(() => {
     let totalAgents = 0
     let totalOverrides = 0
@@ -287,7 +274,6 @@ export default function CommissionManagementView({
     }
   }, [supervisors, settings])
 
-  // Filtered supervisor cards
   const filteredSupervisors = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
 
@@ -317,12 +303,11 @@ export default function CommissionManagementView({
     })
   }, [supervisors, searchQuery, filterMode, settings])
 
-  // Presets
   const presets = [8.0, 10.0, 12.0, 14.0, 15.0]
 
   return (
     <div className="commissions-dashboard-container">
-      {/* Toast Notification */}
+      {}
       {feedbackToast && (
         <div className={`commissions-toast toast-${feedbackToast.type}`}>
           <SvgIcon name={feedbackToast.type === 'error' ? 'alertCircle' : 'check'} size={15} />
@@ -330,7 +315,7 @@ export default function CommissionManagementView({
         </div>
       )}
 
-      {/* Top Banner Header */}
+      {}
       <div className="commissions-header-banner">
         <div className="header-banner-left">
           <div className="banner-icon-chip">
@@ -384,7 +369,7 @@ export default function CommissionManagementView({
         </div>
       </div>
 
-      {/* KPI Stats Bar */}
+      {}
       <div className="commissions-stats-grid">
         <div className="stat-card">
           <div className="stat-icon-wrap icon-primary">
@@ -431,7 +416,7 @@ export default function CommissionManagementView({
         </div>
       </div>
 
-      {/* Real-Time Commission Payout Calculator Drawer */}
+      {}
       {showCalculator && (
         <div className="commission-calculator-panel">
           <div className="calculator-header">
@@ -496,7 +481,7 @@ export default function CommissionManagementView({
               </div>
             </div>
 
-            {/* Calculated Result Breakdown */}
+            {}
             {calcSpvr && (
               <div className="calc-result-box">
                 {(() => {
@@ -533,7 +518,7 @@ export default function CommissionManagementView({
         </div>
       )}
 
-      {/* Search & Filter Toolbar */}
+      {}
       <div className="commissions-toolbar">
         <div className="search-box">
           <SvgIcon name="search" size={15} className="search-icon" />
@@ -579,7 +564,7 @@ export default function CommissionManagementView({
         </div>
       </div>
 
-      {/* Supervisors List Container */}
+      {}
       <div className="supervisors-accordion-list">
         {filteredSupervisors.length === 0 ? (
           <div className="empty-state-card">
@@ -607,7 +592,7 @@ export default function CommissionManagementView({
 
             return (
               <div key={spvrKey} className={`supervisor-commission-card ${isExpanded ? 'is-expanded' : ''}`}>
-                {/* Supervisor Header Bar */}
+                {}
                 <div className="spvr-card-header">
                   <div className="spvr-info-cluster" onClick={() => toggleSupervisorExpanded(spvrKey)}>
                     <button
@@ -637,7 +622,7 @@ export default function CommissionManagementView({
                     </div>
                   </div>
 
-                  {/* Supervisor Baseline Commission Setting Control */}
+                  {}
                   <div className="spvr-rate-control-cluster">
                     <div className="spvr-default-rate-badge">
                       <span className="rate-badge-label">Default Agent Rate:</span>
@@ -691,7 +676,7 @@ export default function CommissionManagementView({
                       )}
                     </div>
 
-                    {/* Quick Preset Buttons */}
+                    {}
                     {canEdit && (
                       <div className="rate-presets-row">
                         {presets.map((p) => (
@@ -721,7 +706,7 @@ export default function CommissionManagementView({
                   </div>
                 </div>
 
-                {/* Sub-Agents Table (Expanded Section) */}
+                {}
                 {isExpanded && (
                   <div className="spvr-agents-table-wrap">
                     <table className="spvr-agents-table">
@@ -774,7 +759,7 @@ export default function CommissionManagementView({
                                 </td>
 
                                 <td className="col-override-toggle">
-                                  {/* Authentic iOS Toggle Switch for Individual Agent Override */}
+                                  {}
                                   <label
                                     className={`ios-switch-cell ${rateInfo.isOverride ? 'is-granted' : 'is-denied'}`}
                                     title={
@@ -860,7 +845,7 @@ export default function CommissionManagementView({
         )}
       </div>
 
-      {/* Confirmation Modal for Resetting Supervisor Overrides */}
+      {}
       <ConfirmActionModal
         isOpen={Boolean(pendingResetSupervisor)}
         title="Reset Agent Overrides?"

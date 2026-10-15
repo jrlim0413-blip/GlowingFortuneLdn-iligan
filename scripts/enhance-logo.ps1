@@ -12,7 +12,6 @@ if (Test-Path $srcPath) {
     $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
     $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
 
-    # ColorMatrix to boost contrast, saturation and sharpness
     $cm = [System.Drawing.Imaging.ColorMatrix]::new(@(
         [single[]]@(1.15, 0.00, 0.00, 0.00, 0.00),
         [single[]]@(0.00, 1.15, 0.00, 0.00, 0.00),

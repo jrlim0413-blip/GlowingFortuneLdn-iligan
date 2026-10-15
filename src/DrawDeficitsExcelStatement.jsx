@@ -35,7 +35,6 @@ export function calculateAgentDrawDeficit(agent, drawKey) {
   if (!agent) return 0
 
   if (drawKey === 'morning') {
-    // 1st Draw: 10:30 AM + 2:00 PM
     const g1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.gross : agent.draws?.['10:30 AM']?.gross) || 0
     const g2 = (agent.draws instanceof Map ? agent.draws.get('2:00 PM')?.gross : agent.draws?.['2:00 PM']?.gross) || 0
     const h1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.hits : agent.draws?.['10:30 AM']?.hits) || 0
@@ -45,7 +44,6 @@ export function calculateAgentDrawDeficit(agent, drawKey) {
   }
 
   if (drawKey === 'afternoon') {
-    // 2nd Draw: 3:00 PM + 5:00 PM with 1st draw positive carryover
     const g1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.gross : agent.draws?.['10:30 AM']?.gross) || 0
     const g2 = (agent.draws instanceof Map ? agent.draws.get('2:00 PM')?.gross : agent.draws?.['2:00 PM']?.gross) || 0
     const h1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.hits : agent.draws?.['10:30 AM']?.hits) || 0
@@ -62,7 +60,6 @@ export function calculateAgentDrawDeficit(agent, drawKey) {
   }
 
   if (drawKey === 'evening') {
-    // 3rd Draw: 7:00 PM + 9:00 PM with 2nd draw positive carryover
     const g1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.gross : agent.draws?.['10:30 AM']?.gross) || 0
     const g2 = (agent.draws instanceof Map ? agent.draws.get('2:00 PM')?.gross : agent.draws?.['2:00 PM']?.gross) || 0
     const h1 = (agent.draws instanceof Map ? agent.draws.get('10:30 AM')?.hits : agent.draws?.['10:30 AM']?.hits) || 0
@@ -85,7 +82,6 @@ export function calculateAgentDrawDeficit(agent, drawKey) {
     return net3 < 0 ? Math.abs(net3) : 0
   }
 
-  // Remittance: Net Sales (Gross - Hits - Commission)
   const gross = Number(agent.totalGross) || 0
   const hits = Number(agent.totalHits) || 0
   const comm = agent.totalSalary !== undefined ? Number(agent.totalSalary) : gross * ((agent.commissionRate || 10) / 100)
@@ -107,7 +103,6 @@ export default function DrawDeficitsExcelStatement({
 }) {
   const isConsolidated = group?.supervisor === 'ALL SUPERVISORS (CONSOLIDATED)'
 
-  // Extract deficits for each draw across supervisor(s)
   const drawsData = useMemo(() => {
     const rawGroups = (isConsolidated && allSupervisors && allSupervisors.length > 0)
       ? allSupervisors
@@ -136,7 +131,6 @@ export default function DrawDeficitsExcelStatement({
       const totalDeficitDraw = supervisorResults.reduce((sum, s) => sum + s.totalDeficit, 0)
       const totalCountDraw = supervisorResults.reduce((sum, s) => sum + s.agents.length, 0)
 
-      // Single Supervisor Data
       let singleSupervisorData = null
       if (!isConsolidated) {
         const spvr = supervisorResults[0] || { supervisor: group?.supervisor || 'SUPERVISOR 1', agents: [], totalDeficit: 0 }
@@ -158,7 +152,6 @@ export default function DrawDeficitsExcelStatement({
     })
   }, [group, allSupervisors, isConsolidated])
 
-  // Compute Overall Agent Figures
   const overallTotals = useMemo(() => {
     const rawGroups = (isConsolidated && allSupervisors && allSupervisors.length > 0)
       ? allSupervisors
@@ -196,7 +189,6 @@ export default function DrawDeficitsExcelStatement({
     }
   }, [group, allSupervisors, isConsolidated])
 
-  // Fetch Payout Shortage Replenishments (PSR) from database
   const [psrData, setPsrData] = useState([])
 
   useEffect(() => {
@@ -246,11 +238,11 @@ export default function DrawDeficitsExcelStatement({
 
   return (
     <div className="modern-roster-document">
-      {/* ALL DRAWS RENDERED WITH SINGLE-COLUMN AGENTS + TOTAL NEGATIVE PER DRAW */}
+      {}
       <div className="modern-draws-container">
         {drawsData.map((drawItem) => (
           <div key={`draw-block-${drawItem.key}`} className="modern-draw-card">
-            {/* Draw Red Banner with Total Negative Highlight */}
+            {}
             <div className="modern-draw-banner">
               <div className="modern-draw-title-left">
                 <span className="draw-title-badge">{drawItem.title}</span>
@@ -263,7 +255,7 @@ export default function DrawDeficitsExcelStatement({
               </div>
             </div>
 
-            {/* SINGLE SUPERVISOR (Single Column Agent List + Total Negative Row) */}
+            {}
             {!isConsolidated && drawItem.singleSupervisorData && (
               <div className="modern-roster-body">
                 {drawItem.singleSupervisorData.totalCount === 0 ? (
@@ -295,7 +287,7 @@ export default function DrawDeficitsExcelStatement({
                           </td>
                         </tr>
                       ))}
-                      {/* Total Negative Every Draw */}
+                      {}
                       <tr className="modern-draw-total-row">
                         <td className="modern-draw-total-label">
                           <div className="modern-td-detail">
@@ -313,7 +305,7 @@ export default function DrawDeficitsExcelStatement({
               </div>
             )}
 
-            {/* CONSOLIDATED (ALL SUPERVISORS) */}
+            {}
             {isConsolidated && (
               <div className="modern-roster-body">
                 {drawItem.totalCountDraw === 0 ? (
@@ -350,7 +342,7 @@ export default function DrawDeficitsExcelStatement({
                             </td>
                           </tr>
                         ))}
-                      {/* Consolidated Total Negative Every Draw */}
+                      {}
                       <tr className="modern-draw-total-row">
                         <td className="modern-draw-total-label">
                           <div className="modern-td-detail">
@@ -370,7 +362,7 @@ export default function DrawDeficitsExcelStatement({
           </div>
         ))}
 
-        {/* CONSOLIDATED SUPERVISOR TOTAL & PSR CONTAINER */}
+        {}
         <div className="modern-draw-card modern-consolidated-card">
           <div className="modern-draw-banner consolidated-banner">
             <div className="modern-draw-title-left">

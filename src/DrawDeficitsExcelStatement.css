@@ -1,6 +1,4 @@
-/* ==========================================================================
-   COMPACT DEFICIT DRAW ROSTER (EMBEDDED IN 1 LONG BOND PAPER)
-   ========================================================================== */
+
 
 .modern-roster-document {
   background: #ffffff;
@@ -12,7 +10,7 @@
   box-sizing: border-box;
 }
 
-/* Draws Container */
+
 .modern-draws-container {
   display: flex;
   flex-direction: column;
@@ -30,7 +28,7 @@
   break-inside: avoid;
 }
 
-/* Draw Red Banner */
+
 .modern-draw-banner {
   background: linear-gradient(90deg, #991b1b 0%, #b91c1c 50%, #881337 100%) !important;
   color: #ffffff !important;
@@ -81,7 +79,7 @@
   font-weight: 800;
 }
 
-/* Clean Draw Notice */
+
 .modern-clean-draw-notice {
   padding: 2.5px 6px;
   background: #f0fdf4;
@@ -99,7 +97,7 @@
   color: #15803d;
 }
 
-/* Draw Header Total Badge */
+
 .draw-header-total-badge {
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -119,7 +117,7 @@
   font-weight: 800;
 }
 
-/* Modern Single-Column Table */
+
 .modern-single-col-table {
   width: 100%;
   border-collapse: collapse;
@@ -159,7 +157,7 @@
   white-space: nowrap;
 }
 
-/* Total Row per Draw */
+
 .modern-draw-total-row {
   background: #fef2f2 !important;
   border-top: 1px solid #f87171 !important;
@@ -210,7 +208,7 @@
   margin-right: 3px;
 }
 
-/* Legacy Multi-Column Grid System */
+
 .modern-columns-grid {
   display: grid;
   width: 100%;
@@ -314,16 +312,14 @@
   print-color-adjust: exact !important;
 }
 
-/* Consolidated Grid */
+
 .modern-consolidated-supervisors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   width: 100%;
 }
 
-/* ==========================================================================
-   PRINT MEDIA RULES (PORTRAIT LONG BOND PAPER COMPATIBILITY)
-   ========================================================================== */
+
 
 @media print {
   body.print-excel-roster-active {
@@ -495,7 +491,7 @@
     white-space: nowrap !important;
   }
 
-  /* CRITICAL: Force red negative amounts to print clearly with prominent badge */
+  
   .modern-amount-text {
     font-size: 7.5pt !important;
     font-weight: 900 !important;
@@ -556,7 +552,7 @@
   }
 }
 
-/* CONSOLIDATED SUPERVISOR TOTAL & PSR CONTAINER */
+
 .modern-consolidated-card {
   margin-top: 10px;
   border: 1px solid #1e293b;

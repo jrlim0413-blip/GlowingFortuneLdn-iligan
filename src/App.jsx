@@ -16,6 +16,12 @@ import {
   syncCommissionSettingsFromSupabase,
   subscribeToMatrixRealtime,
   isSupabaseConfigured,
+  bootFromCloud,
+  getCloudSession,
+  updateCloudSession,
+  revokeCloudSession,
+  getSessionTokenFromUrl,
+  setSessionTokenInUrl,
 } from './supabase'
 import {
   getRbacRoles,
@@ -678,19 +684,15 @@ function calculateMetricsTotals(list = []) {
   )
 }
 
-// Paper budgets at 96dpi (px), for auto-fit calculations
 const PAPER_BUDGETS = {
-  longBond: { w: 756, h: 1188 }, // 8.5in × 13in @ 96dpi minus 4mm margins
-  a4:       { w: 756, h: 1026 }, // 8.27in × 11.69in @ 96dpi minus 4mm margins
+  longBond: { w: 756, h: 1188 }, 
+  a4:       { w: 756, h: 1026 }, 
 }
 
 function calculateAutoFitScale(agentCount, paperType = 'a4') {
-  // Fallback estimate used only before DOM measurement is available
   const budget = PAPER_BUDGETS[paperType] || PAPER_BUDGETS.a4
-  // Fixed chrome: header ~80px, meta ~22px, th ~24px, 2 section headers ~40px,
-  // 2 subtotal rows ~36px, grand total ~28px, spacers ~16px, draw deficits ~200px, sigs ~80px, footer ~20px
   const fixedPx = 546
-  const rowPx = 17 // compact row height
+  const rowPx = 17 
   const estimatedHeight = fixedPx + agentCount * rowPx
   if (estimatedHeight <= budget.h) return 100
   const exact = Math.floor((budget.h / estimatedHeight) * 100)
@@ -718,7 +720,6 @@ function SupervisorStatementTable({
     netSales: positiveTotals.netSales + negativeTotals.netSales,
   }
 
-  // ─── Real DOM auto-fit ────────────────────────────────────────────────────
   const sheetRef = useRef(null)
   const wrapRef  = useRef(null)
   const [computedScale, setComputedScale] = useState(fitOnePage ? (fontScale || 100) : 100)
@@ -738,14 +739,12 @@ function SupervisorStatementTable({
       const contentW = sheetRef.current?.scrollWidth  || 0
       const wrapW    = wrapRef.current?.clientWidth   || 800
 
-      // Determine available print height from @page or use A4 as default
-      // A4 = 297mm - 8mm margins ≈ 1026px @ 96dpi
       const availH = PAPER_BUDGETS.a4.h
       const availW = wrapW
 
       const scaleH = availH / contentH
       const scaleW = availW / contentW
-      const scale  = Math.min(scaleH, scaleW, 1) // never upscale past 100%
+      const scale  = Math.min(scaleH, scaleW, 1) 
 
       const pct = Math.max(55, Math.floor(scale * 100))
       setComputedScale(pct)
@@ -759,18 +758,14 @@ function SupervisorStatementTable({
       cancelAnimationFrame(raf)
       resizeObserver.disconnect()
     }
-  // Re-run when agent list changes or group changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitOnePage, group?.agents?.length, group?.supervisor])
 
-  // Apply computed scale via CSS transform (more reliable than zoom across browsers/print)
   useLayoutEffect(() => {
     if (!fitOnePage || !sheetRef.current) return
     if (computedScale < 100) {
       const s = (computedScale / 100).toFixed(4)
       sheetRef.current.style.transformOrigin = 'top left'
       sheetRef.current.style.transform = `scale(${s})`
-      // Expand wrapper to compensate so siblings aren't pushed
       sheetRef.current.style.width = `${(100 / (computedScale / 100)).toFixed(2)}%`
     } else {
       sheetRef.current.style.transform = ''
@@ -786,7 +781,7 @@ function SupervisorStatementTable({
       className={`statement-sheet ${isModal ? 'statement-sheet-modal' : 'statement-sheet-inline'} ${fitOnePage ? 'a4-single-page-fit' : ''}`}
       style={{ display: 'block', boxSizing: 'border-box' }}
     >
-      {/* ── FULL-WIDTH HEADER ─────────────────────────────────────── */}
+      {}
       <div className="statement-header-block">
         <h3 className="statement-company-title">GLOWING FORTUNE CORPORATION</h3>
         <h4 className="statement-report-title">CONDENSED SUPERVISOR AGENT REMITTANCE SUMMARY</h4>
@@ -802,10 +797,10 @@ function SupervisorStatementTable({
         </div>
       </div>
 
-      {/* ── 2-COLUMN BODY: LEFT = Balance Table | RIGHT = Draw Deficits ── */}
+      {}
       <div className="statement-two-col-body">
 
-        {/* LEFT COLUMN – Official Balance Table */}
+        {}
         <div className="statement-left-col">
           <div className="statement-col-label">OFFICIAL REMITTANCE STATEMENT</div>
           <div className="statement-table-container">
@@ -1008,7 +1003,7 @@ function SupervisorStatementTable({
           </div>
         </div>
 
-        {/* RIGHT COLUMN – Draw Deficit Breakdown */}
+        {}
         <div className="statement-right-col">
           <div className="statement-col-label">DRAW DEFICIT BREAKDOWN</div>
           <DrawDeficitsExcelStatement
@@ -1019,9 +1014,9 @@ function SupervisorStatementTable({
           />
         </div>
 
-      </div>{/* end .statement-two-col-body */}
+      </div>{}
 
-      {/* ── FULL-WIDTH FOOTER ─────────────────────────────────────── */}
+      {}
       <div className="statement-signatures-section">
         <div className="statement-sig-column">
           <div className="statement-sig-line" />
@@ -1869,40 +1864,22 @@ function App() {
   const [reportViewMode, setReportViewMode] = useState('matrix')
   const [statementModalGroup, setStatementModalGroup] = useState(null)
   const [isDeficitModalOpen, setIsDeficitModalOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('luckybet_user') || sessionStorage.getItem('luckybet_user')
-      if (!saved) return null
-      const parsed = JSON.parse(saved)
-      if (parsed) {
-        if (parsed.branch) parsed.branch = parsed.branch.replace(/Mandaue/gi, 'LDN')
-        if (parsed.username) parsed.username = parsed.username.replace(/^mandaue\.staff$/i, 'ldn.staff').replace(/^teller\.mandaue$/i, 'teller.ldn')
-        localStorage.setItem('luckybet_user', JSON.stringify(parsed))
-      }
-      return parsed
-    } catch {
-      return null
-    }
-  })
+  const [currentUser, setCurrentUser] = useState(null)
   const [rbacRoles, setRbacRoles] = useState(() => getRbacRoles())
   const [rbacRev, setRbacRev] = useState(0)
   const [commissionSettings, setCommissionSettings] = useState(() => loadCommissionSettings())
 
   useEffect(() => {
-    try {
-      ['luckybet_user', 'luckybet_rbac_users'].forEach((key) => {
-        const val = localStorage.getItem(key)
-        if (val && /Mandaue/i.test(val)) {
-          const cleaned = val.replace(/Mandaue/gi, 'LDN')
-            .replace(/mandaue\.staff/gi, 'ldn.staff')
-            .replace(/teller\.mandaue/gi, 'teller.ldn')
-            .replace(/luckybetplay\.ph/gi, 'glowingfortune.ph')
-          localStorage.setItem(key, cleaned)
-        }
-      })
-    } catch (e) {
-      console.warn('Legacy localStorage migration notice:', e)
-    }
+    const sessionToken = getSessionTokenFromUrl()
+    bootFromCloud(sessionToken).then((data) => {
+      if (data?.sessionUser) {
+        setCurrentUser(data.sessionUser)
+      } else if (sessionToken) {
+        getCloudSession().then((u) => { if (u) setCurrentUser(u) }).catch(() => void 0)
+      }
+      setRbacRoles(getRbacRoles())
+      setCommissionSettings(loadCommissionSettings())
+    }).catch(() => void 0)
 
     const handleCommissionChange = (e) => {
       if (e?.detail) setCommissionSettings(e.detail)
@@ -1913,20 +1890,16 @@ function App() {
   }, [])
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    try {
-      const saved = localStorage.getItem('luckybet_theme')
-      if (saved) return saved === 'dark'
+    if (typeof window !== 'undefined') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches
-    } catch {
-      return false
     }
+    return false
   })
 
   useEffect(() => {
     const themeVal = isDarkMode ? 'dark' : 'light'
     document.documentElement.setAttribute('data-theme', themeVal)
     document.body.setAttribute('data-theme', themeVal)
-    localStorage.setItem('luckybet_theme', themeVal)
   }, [isDarkMode])
 
   const handleSwitchUser = (targetUser) => {
@@ -1947,7 +1920,7 @@ function App() {
       simulatedFromAdmin: !isTargetAdmin,
     }
     setCurrentUser(newUser)
-    localStorage.setItem('luckybet_user', JSON.stringify(newUser))
+    updateCloudSession(newUser.token, newUser).catch(() => void 0)
   }
 
   const handleReturnToAdmin = () => {
@@ -1968,10 +1941,9 @@ function App() {
       simulatedFromAdmin: false,
     }
     setCurrentUser(restored)
-    localStorage.setItem('luckybet_user', JSON.stringify(restored))
+    updateCloudSession(restored.token, restored).catch(() => void 0)
   }
 
-  // Listen for real-time RBAC updates (both role-tier toggles and account-specific custom overrides)
   useEffect(() => {
     const handleRbacChange = () => {
       setRbacRoles(getRbacRoles())
@@ -1979,31 +1951,27 @@ function App() {
     }
     window.addEventListener('luckybet_rbac_change', handleRbacChange)
 
-    // 1. Initial sync of permissions and commission settings from Supabase Cloud
     if (isSupabaseConfigured) {
-      syncMatrixPermissionsFromSupabase().catch(() => {})
-      syncCommissionSettingsFromSupabase().catch(() => {})
+      syncMatrixPermissionsFromSupabase().catch(() => void 0)
+      syncCommissionSettingsFromSupabase().catch(() => void 0)
     }
 
-    // 2. Real-time subscription to cloud matrix toggles (Supabase Realtime Channel & Postgres changes)
     const unsubRealtime = subscribeToMatrixRealtime(() => {
-      syncMatrixPermissionsFromSupabase().catch(() => {})
+      syncMatrixPermissionsFromSupabase().catch(() => void 0)
     })
 
-    // 3. Sync whenever the tab/window gains focus or becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isSupabaseConfigured) {
-        syncMatrixPermissionsFromSupabase().catch(() => {})
-        syncCommissionSettingsFromSupabase().catch(() => {})
+        syncMatrixPermissionsFromSupabase().catch(() => void 0)
+        syncCommissionSettingsFromSupabase().catch(() => void 0)
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    // 4. Periodic polling safety check (every 30 seconds)
     const syncInterval = setInterval(() => {
       if (isSupabaseConfigured) {
-        syncMatrixPermissionsFromSupabase().catch(() => {})
-        syncCommissionSettingsFromSupabase().catch(() => {})
+        syncMatrixPermissionsFromSupabase().catch(() => void 0)
+        syncCommissionSettingsFromSupabase().catch(() => void 0)
       }
     }, 30000)
 
@@ -2015,7 +1983,6 @@ function App() {
     }
   }, [])
 
-  // Calculate dynamic effective capabilities for currentUser depending on account and matrix toggles
   const userPermissions = useMemo(() => {
     if (!currentUser) return []
     return getUserEffectivePermissions(currentUser, rbacRoles)
@@ -2028,7 +1995,6 @@ function App() {
     [currentUser, rbacRoles, rbacRev]
   )
 
-  // Automatically snap to first permitted tab if activeView is not permitted
   useEffect(() => {
     if (!currentUser) return
     const isAllowed = (view) => {
@@ -2050,15 +2016,64 @@ function App() {
   }, [activeView, can, currentUser])
 
   const handleLogout = () => {
-    signOutFromSupabase().catch(() => {})
-    localStorage.removeItem('luckybet_user')
-    localStorage.removeItem('luckybet_token')
-    sessionStorage.removeItem('luckybet_user')
+    revokeCloudSession(currentUser?.token).catch(() => void 0)
+    signOutFromSupabase().catch(() => void 0)
     setCurrentUser(null)
   }
 
   const isToday = selectedDate === getCurrentDate()
   const isYesterday = selectedDate === getYesterdayDate()
+
+  const fetchProxiedReport = async (type, params) => {
+    if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+      try {
+        const pUrl = new URL('/api/proxy', window.location.origin)
+        pUrl.searchParams.set('type', type)
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) pUrl.searchParams.set(k, v)
+        })
+        const pRes = await fetch(pUrl)
+        if (pRes.ok) {
+          return await pRes.json()
+        }
+      } catch (e) {
+        console.warn('Proxy report error, falling back:', e)
+      }
+    }
+    const isDummyToken = (t) => !t || t.startsWith('rbac-token') || t.startsWith('local-auth')
+    const fallbackToken = '74242|PwJgY3Ia4jzsBUGsfyedB3BvpelUP0Sb9XxcYZmE'
+    const effectiveToken = authorization || (!isDummyToken(currentUser?.token) ? currentUser?.token : null) || fallbackToken
+    const headers = effectiveToken
+      ? { Authorization: `Bearer ${effectiveToken}`, Accept: 'application/json' }
+      : { Accept: 'application/json' }
+
+    let fallbackUrl = ''
+    if (type === 'overall') {
+      const u = new URL(overallApiUrl)
+      u.searchParams.set('from', params.from)
+      u.searchParams.set('to', params.to)
+      fallbackUrl = u.toString()
+    } else if (type === 'draw') {
+      const u = new URL(drawApiUrl)
+      u.searchParams.set('drawId', params.drawId)
+      u.searchParams.set('from', params.from)
+      u.searchParams.set('to', params.to)
+      fallbackUrl = u.toString()
+    } else if (type === 'supervisor') {
+      const u = new URL(supervisorApiUrl)
+      u.searchParams.set('from', params.from)
+      u.searchParams.set('to', params.to)
+      fallbackUrl = u.toString()
+    } else if (type === 'teller') {
+      const u = new URL(tellerApiUrl)
+      u.searchParams.set('from', params.from)
+      u.searchParams.set('to', params.to)
+      fallbackUrl = u.toString()
+    }
+    const fRes = await fetch(fallbackUrl, { headers })
+    if (!fRes.ok) throw new Error(`Request failed (${fRes.status})`)
+    return await fRes.json()
+  }
 
   const loadReport = useCallback(async (targetDate = selectedDate) => {
     const queryDate = targetDate || selectedDate || getCurrentDate()
@@ -2066,26 +2081,14 @@ function App() {
     setError('')
 
     try {
-      const isDummyToken = (t) => !t || t.startsWith('rbac-token') || t.startsWith('local-auth')
-      const fallbackToken = '74242|PwJgY3Ia4jzsBUGsfyedB3BvpelUP0Sb9XxcYZmE'
-      const effectiveToken = authorization || (!isDummyToken(currentUser?.token) ? currentUser?.token : null) || fallbackToken
-      const headers = effectiveToken
-        ? { Authorization: `Bearer ${effectiveToken}`, Accept: 'application/json' }
-        : { Accept: 'application/json' }
-
       let overallData = []
       let dynamicDrawIds = []
 
       if (overallApiUrl) {
         try {
-          const overallUrl = new URL(overallApiUrl)
-          overallUrl.searchParams.set('from', queryDate)
-          overallUrl.searchParams.set('to', getNextDate(queryDate))
-          const overallRes = await fetch(overallUrl, { headers })
-          if (overallRes.ok) {
-            overallData = normalizeRows(await overallRes.json())
-            dynamicDrawIds = overallData.map((d) => d?.id).filter(Boolean)
-          }
+          const overallDataRaw = await fetchProxiedReport('overall', { from: queryDate, to: getNextDate(queryDate) })
+          overallData = normalizeRows(overallDataRaw)
+          dynamicDrawIds = overallData.map((d) => d?.id).filter(Boolean)
         } catch (fetchDrawsError) {
           console.warn('Unable to fetch dynamic draw IDs from overallApiUrl:', fetchDrawsError)
         }
@@ -2102,22 +2105,13 @@ function App() {
       if (drawApiUrl && targetDrawIds.length > 0) {
         const [responses, supervisorResponse] = await Promise.all([
           Promise.all(targetDrawIds.map(async (drawId) => {
-            const requestUrl = new URL(drawApiUrl)
-            requestUrl.searchParams.set('drawId', drawId)
-            requestUrl.searchParams.set('from', queryDate)
-            requestUrl.searchParams.set('to', getNextDate(queryDate))
-            const response = await fetch(requestUrl, { headers })
-            if (!response.ok) throw new Error(`Unable to load draw ${drawId} (${response.status})`)
-            return normalizeRows(await response.json())
+            const drawData = await fetchProxiedReport('draw', { drawId, from: queryDate, to: getNextDate(queryDate) })
+            return normalizeRows(drawData)
           })),
           supervisorApiUrl
             ? (async () => {
-                const requestUrl = new URL(supervisorApiUrl)
-                requestUrl.searchParams.set('from', queryDate)
-                requestUrl.searchParams.set('to', getNextDate(queryDate))
-                const response = await fetch(requestUrl, { headers })
-                if (!response.ok) throw new Error(`Unable to load supervisor names (${response.status})`)
-                return normalizeRows(await response.json())
+                const spvrData = await fetchProxiedReport('supervisor', { from: queryDate, to: getNextDate(queryDate) })
+                return normalizeRows(spvrData)
               })()
             : Promise.resolve([])
         ])
@@ -2130,12 +2124,8 @@ function App() {
       } else {
         const sourceApiUrl = tellerApiUrl
         if (sourceApiUrl) {
-          const requestUrl = new URL(sourceApiUrl)
-          requestUrl.searchParams.set('from', queryDate)
-          requestUrl.searchParams.set('to', getNextDate(queryDate))
-          const response = await fetch(requestUrl, { headers })
-          if (!response.ok) throw new Error(`Unable to load report (${response.status})`)
-          reportRows = normalizeRows(await response.json())
+          const tellerData = await fetchProxiedReport('teller', { from: queryDate, to: getNextDate(queryDate) })
+          reportRows = normalizeRows(tellerData)
         }
         setSupervisorRows([])
       }
@@ -2683,7 +2673,7 @@ function App() {
                     simulatedFromAdmin: !isTargetAdmin,
                   }
                   setCurrentUser(updatedUser)
-                  localStorage.setItem('luckybet_user', JSON.stringify(updatedUser))
+                  updateCloudSession(updatedUser.token, updatedUser).catch(() => void 0)
                 }}
                 branchName={branchName}
                 initialTab={activeView === 'activity' ? 'logs' : 'users'}

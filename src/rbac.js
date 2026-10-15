@@ -1,14 +1,6 @@
-// src/rbac.js - Role-Based Access Control (RBAC) & Credential Store for Glowing Fortune Corporation
 import { saveSupabaseMatrixConfig } from './supabase.js'
 
-const USERS_STORAGE_KEY = 'luckybet_rbac_users'
-const ROLES_STORAGE_KEY = 'luckybet_rbac_roles'
-const AUDIT_STORAGE_KEY = 'luckybet_rbac_audit_logs'
-
 export const PERMISSIONS = [
-  // ---------------------------------------------------------------------------
-  // 1. WORKSPACE TABS (Sidebar Navigation Menus)
-  // ---------------------------------------------------------------------------
   {
     key: 'view_overview',
     label: 'Consolidated Overview & KPIs Tab',
@@ -54,10 +46,6 @@ export const PERMISSIONS = [
     group: 'Workspaces',
     description: 'Configure baseline agent commission rates per supervisor and individual teller overrides.',
   },
-
-  // ---------------------------------------------------------------------------
-  // 2. IN-TAB FEATURES (Operational Tools & Actions inside Workspaces)
-  // ---------------------------------------------------------------------------
   {
     key: 'print_statements',
     label: 'Print Remittance Statements',
@@ -106,67 +94,122 @@ export const PERMISSIONS = [
     group: 'Operations',
     parentTabs: ['manage_commissions'],
     parentTabLabels: ['Commissions Tab'],
-    description: 'Allows updating supervisor baseline rates and provisioning custom overrides for specific agents.',
+    description: 'Enables changing baseline supervisor commission rates and setting individual agent custom percentages.',
   },
+  {
+    key: 'inspect_deficits',
+    label: 'Inspect Shortage & Deficit Accounts',
+    type: 'feature',
+    featureName: 'Deficit Inspector',
+    group: 'Operations',
+    parentTabs: ['view_overview', 'view_reports'],
+    parentTabLabels: ['Overview Tab', 'Draw Reports Tab'],
+    description: 'Opens deep breakdown modal for negative balance tellers across specific draw rotations.',
+  },
+  {
+    key: 'view_all_draws',
+    label: 'View All PCSO Draw Rotations',
+    type: 'feature',
+    featureName: 'All Draw Rotations',
+    group: 'Operations',
+    parentTabs: ['view_reports'],
+    parentTabLabels: ['Draw Reports Tab'],
+    description: 'Enables inspection across 2:00PM, 5:00PM, and 9:00PM draw turnovers without restrictions.',
+  },
+  {
+    key: 'change_theme',
+    label: 'Toggle Dark / Light Display Mode',
+    type: 'feature',
+    featureName: 'Theme Switcher',
+    group: 'General',
+    parentTabs: ['view_overview', 'view_reports', 'manage_users', 'audit_logs', 'manage_commissions'],
+    parentTabLabels: ['All Workspaces'],
+    description: 'Allows toggling between sleek dark mode and high-contrast light mode UI.',
+  },
+]
+
+export const PERMISSION_GROUPS = [
+  { id: 'Workspaces', label: 'Workspace Menus & Navigation Tabs' },
+  { id: 'Operations', label: 'Financial Operations & Actions' },
+  { id: 'Administration', label: 'Security & Access Administration' },
+  { id: 'Technical', label: 'Diagnostics & Developer Feeds' },
+  { id: 'General', label: 'General Interface Preferences' },
 ]
 
 export const DEFAULT_ROLES = {
   admin: {
-    key: 'admin',
+    id: 'admin',
     label: 'System Administrator',
-    badge: 'Super Admin',
-    color: '#8b5cf6',
-    bgColor: 'rgba(139, 92, 246, 0.15)',
-    borderColor: 'rgba(139, 92, 246, 0.35)',
-    description: 'Unrestricted full access across accounting, reports, user configuration, and audit security.',
-    permissions: [
-      'view_overview',
-      'view_reports',
-      'manage_users',
-      'audit_logs',
-      'manage_commissions',
-      'print_statements',
-      'export_data',
-      'view_raw_feed',
-      'create_credentials',
-      'edit_commissions',
-    ],
+    badge: 'SUPERADMIN',
+    color: '#ef4444',
+    bg: 'rgba(239, 68, 68, 0.12)',
+    border: 'rgba(239, 68, 68, 0.35)',
+    description: 'Unrestricted master access to all workspaces, credential management, and audit logs.',
+    permissions: PERMISSIONS.map((p) => p.key),
   },
   accountant: {
-    key: 'accountant',
-    label: 'Head Cashier',
-    badge: 'Cashier Lead',
-    color: '#38bdf8',
-    bgColor: 'rgba(56, 189, 248, 0.15)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    description: 'Audits daily 3-draw rotation matrices, reviews supervisor balance sheets, and prints statements.',
+    id: 'accountant',
+    label: 'Head Cashier / Accountant',
+    badge: 'ACCOUNTING',
+    color: '#06b6d4',
+    bg: 'rgba(6, 182, 212, 0.12)',
+    border: 'rgba(6, 182, 212, 0.35)',
+    description: 'Access to financial overviews, draw turnover reports, agent statements, and print tools.',
     permissions: [
       'view_overview',
       'view_reports',
-      'manage_commissions',
       'print_statements',
       'export_data',
-      'view_raw_feed',
+      'manage_commissions',
       'edit_commissions',
+      'inspect_deficits',
+      'view_all_draws',
+      'change_theme',
     ],
   },
   supervisor: {
-    key: 'supervisor',
+    id: 'supervisor',
     label: 'Branch Supervisor',
-    badge: 'Area Lead',
-    color: '#facc15',
-    bgColor: 'rgba(250, 204, 21, 0.15)',
-    borderColor: 'rgba(250, 204, 21, 0.35)',
-    description: 'Monitors assigned terminal agents, checks remittance ledger, and tracks draw turnover.',
-    permissions: ['view_overview', 'view_reports', 'manage_commissions'],
+    badge: 'SUPERVISOR',
+    color: '#8b5cf6',
+    bg: 'rgba(139, 92, 246, 0.12)',
+    border: 'rgba(139, 92, 246, 0.35)',
+    description: 'Oversees zone turnover reports, supervisor statement printing, and draw results.',
+    permissions: [
+      'view_overview',
+      'view_reports',
+      'print_statements',
+      'export_data',
+      'inspect_deficits',
+      'view_all_draws',
+      'change_theme',
+    ],
+  },
+  auditor: {
+    id: 'auditor',
+    label: 'Internal Compliance Auditor',
+    badge: 'AUDITOR',
+    color: '#f59e0b',
+    bg: 'rgba(245, 158, 11, 0.12)',
+    border: 'rgba(245, 158, 11, 0.35)',
+    description: 'Compliance auditor with read access to reports, turnover audit trails, and security logs.',
+    permissions: [
+      'view_overview',
+      'view_reports',
+      'audit_logs',
+      'export_data',
+      'inspect_deficits',
+      'view_all_draws',
+      'change_theme',
+    ],
   },
   staff: {
-    key: 'staff',
+    id: 'staff',
     label: 'Terminal Staff',
-    badge: 'Read Only',
-    color: '#34d399',
-    bgColor: 'rgba(52, 211, 153, 0.15)',
-    borderColor: 'rgba(52, 211, 153, 0.35)',
+    badge: 'TERMINAL',
+    color: '#10b981',
+    bg: 'rgba(16, 185, 129, 0.12)',
+    border: 'rgba(16, 185, 129, 0.35)',
     description: 'Operational terminal assistant with access restricted to live overview metrics.',
     permissions: ['view_overview'],
   },
@@ -258,80 +301,76 @@ export const DEFAULT_AUDIT_LOGS = [
   },
 ]
 
-// -----------------------------------------------------------------------------
-// Storage Accessors
-// -----------------------------------------------------------------------------
-const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+let inMemoryRoles = DEFAULT_ROLES
+let inMemoryUserPerms = {}
+let inMemoryUsers = DEFAULT_USERS
+let inMemoryDeleted = new Set()
+let inMemoryAuditLogs = [...DEFAULT_AUDIT_LOGS]
+
+export function setInMemoryRoles(roles) {
+  if (roles && typeof roles === 'object') {
+    inMemoryRoles = roles
+  }
+}
+
+export function setInMemoryUserPerms(perms) {
+  if (perms && typeof perms === 'object') {
+    inMemoryUserPerms = perms
+  }
+}
+
+export function setInMemoryUsers(users) {
+  if (Array.isArray(users)) {
+    inMemoryUsers = users
+  }
+}
 
 export function getRbacRoles() {
-  if (!isBrowser) return DEFAULT_ROLES
-  try {
-    const raw = localStorage.getItem(ROLES_STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch (err) {
-    console.warn('Failed to parse roles from localStorage:', err)
-  }
-  return DEFAULT_ROLES
+  return inMemoryRoles
 }
 
 export function saveRbacRoles(roles) {
-  if (!isBrowser) return
-  try {
-    localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles))
+  inMemoryRoles = roles
+  if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('luckybet_rbac_change', { detail: { roles } }))
-
-    // Asynchronously synchronize online to Supabase Cloud Matrix
-    saveSupabaseMatrixConfig({
-      roles,
-      userPerms: getUserCustomPermissionsMap(),
-    }).catch((err) => {
-      console.warn('Supabase cloud roles sync failed:', err)
-    })
-  } catch (err) {
-    console.error('Failed to save roles to localStorage:', err)
   }
+
+  saveSupabaseMatrixConfig({
+    roles,
+    userPerms: inMemoryUserPerms,
+  }).catch((err) => {
+    console.warn('Supabase cloud roles sync failed:', err)
+  })
 }
 
-const USER_PERMS_KEY = 'luckybet_rbac_user_perms'
-
 export function getUserCustomPermissionsMap() {
-  if (!isBrowser) return {}
-  try {
-    const raw = localStorage.getItem(USER_PERMS_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return {}
+  return inMemoryUserPerms
 }
 
 export function saveUserCustomPermissionsMap(map) {
-  if (!isBrowser) return
-  try {
-    localStorage.setItem(USER_PERMS_KEY, JSON.stringify(map))
+  inMemoryUserPerms = map
+  if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('luckybet_rbac_change', { detail: { userPerms: map } }))
-
-    // Asynchronously synchronize online to Supabase Cloud Matrix
-    saveSupabaseMatrixConfig({
-      roles: getRbacRoles(),
-      userPerms: map,
-    }).catch((err) => {
-      console.warn('Supabase cloud user perms sync failed:', err)
-    })
-  } catch (err) {
-    console.error('Failed to save user custom permissions:', err)
   }
+
+  saveSupabaseMatrixConfig({
+    roles: inMemoryRoles,
+    userPerms: map,
+  }).catch((err) => {
+    console.warn('Supabase cloud user perms sync failed:', err)
+  })
 }
 
 export function getUserCustomPermissions(username) {
   if (!username) return null
-  const map = getUserCustomPermissionsMap()
   const clean = username.trim().toLowerCase()
-  return Array.isArray(map[clean]) ? map[clean] : null
+  return Array.isArray(inMemoryUserPerms[clean]) ? inMemoryUserPerms[clean] : null
 }
 
 export function setUserCustomPermissions(username, permissions) {
   if (!username) return
-  const map = getUserCustomPermissionsMap()
   const clean = username.trim().toLowerCase()
+  const map = { ...inMemoryUserPerms }
   if (permissions === null || permissions === undefined) {
     delete map[clean]
   } else {
@@ -344,35 +383,18 @@ export function clearUserCustomPermissions(username) {
   setUserCustomPermissions(username, null)
 }
 
-const DELETED_USERS_KEY = 'luckybet_rbac_deleted_users'
-
 export function getDeletedUsernames() {
-  if (!isBrowser) return []
-  try {
-    const raw = localStorage.getItem(DELETED_USERS_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return []
+  return Array.from(inMemoryDeleted)
 }
 
 export function recordDeletedUsername(username) {
-  if (!isBrowser || !username) return
-  try {
-    const list = getDeletedUsernames()
-    const clean = username.trim().toLowerCase()
-    if (!list.includes(clean)) {
-      list.push(clean)
-      localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(list))
-    }
-  } catch {}
+  if (!username) return
+  inMemoryDeleted.add(username.trim().toLowerCase())
 }
 
 export function unmarkDeletedUsername(username) {
-  if (!isBrowser || !username) return
-  try {
-    const list = getDeletedUsernames().filter((u) => u !== username.trim().toLowerCase())
-    localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(list))
-  } catch {}
+  if (!username) return
+  inMemoryDeleted.delete(username.trim().toLowerCase())
 }
 
 export function sanitizeBranchString(str) {
@@ -381,92 +403,46 @@ export function sanitizeBranchString(str) {
 }
 
 export function getRbacUsers() {
-  if (!isBrowser) return DEFAULT_USERS
-  const deleted = getDeletedUsernames()
-
-  try {
-    const raw = localStorage.getItem(USERS_STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        let changed = false
-        const sanitized = parsed.map((u) => {
-          const newBranch = sanitizeBranchString(u.branch)
-          const newEmail = u.email ? u.email.replace(/luckybetplay\.ph/gi, 'glowingfortune.ph') : u.email
-          const newUsername = u.username ? u.username.replace(/^mandaue\.staff$/i, 'ldn.staff').replace(/^teller\.mandaue$/i, 'teller.ldn') : u.username
-          if (newBranch !== u.branch || newEmail !== u.email || newUsername !== u.username) {
-            changed = true
-          }
-          return {
-            ...u,
-            username: newUsername,
-            branch: newBranch,
-            email: newEmail,
-          }
-        }).filter((u) => !deleted.includes(u.username.toLowerCase()))
-
-        if (changed) {
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(sanitized))
-        }
-        return sanitized
+  return inMemoryUsers
+    .map((u) => {
+      const newBranch = sanitizeBranchString(u.branch)
+      const newEmail = u.email ? u.email.replace(/luckybetplay\.ph/gi, 'glowingfortune.ph') : u.email
+      const newUsername = u.username ? u.username.replace(/^mandaue\.staff$/i, 'ldn.staff').replace(/^teller\.mandaue$/i, 'teller.ldn') : u.username
+      return {
+        ...u,
+        username: newUsername,
+        branch: newBranch,
+        email: newEmail,
       }
-    }
-  } catch (err) {
-    console.warn('Failed to parse users from localStorage:', err)
-  }
-
-  // Initialize default users if not set, omitting any deleted ones
-  const initial = DEFAULT_USERS.filter((u) => !deleted.includes(u.username.toLowerCase()))
-  try {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initial))
-  } catch {}
-  return initial
+    })
+    .filter((u) => !inMemoryDeleted.has(u.username.toLowerCase()))
 }
 
 export function saveRbacUsers(users) {
-  if (!isBrowser) return
-  try {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
-  } catch (err) {
-    console.error('Failed to save users to localStorage:', err)
+  if (Array.isArray(users)) {
+    inMemoryUsers = users
   }
 }
 
 export function getAuditLogs() {
-  try {
-    const raw = localStorage.getItem(AUDIT_STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed
-    }
-  } catch {}
-  return DEFAULT_AUDIT_LOGS
+  return inMemoryAuditLogs
 }
 
 export function addAuditLog(action, details, actor = 'current_user', severity = 'info') {
-  try {
-    const logs = getAuditLogs()
-    const now = new Date()
-    const timeStr = `Today, ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    const newEntry = {
-      id: `log_${Date.now()}`,
-      timestamp: timeStr,
-      action,
-      actor,
-      details,
-      severity,
-    }
-    const updated = [newEntry, ...logs].slice(0, 50)
-    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(updated))
-    return updated
-  } catch {
-    return []
+  const now = new Date()
+  const timeStr = `Today, ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  const newEntry = {
+    id: `log_${Date.now()}`,
+    timestamp: timeStr,
+    action,
+    actor,
+    details,
+    severity,
   }
+  inMemoryAuditLogs = [newEntry, ...inMemoryAuditLogs].slice(0, 50)
+  return inMemoryAuditLogs
 }
 
-// -----------------------------------------------------------------------------
-// Authentication & RBAC Verification (Strict Directory Matching)
-// -----------------------------------------------------------------------------
 export function verifyUserCredentials(username, password) {
   const users = getRbacUsers()
   const cleanUser = String(username || '').trim().toLowerCase()
@@ -477,7 +453,6 @@ export function verifyUserCredentials(username, password) {
     return null
   }
 
-  // Check if account exists but is deactivated
   const userRecord = users.find((u) => u.username.toLowerCase() === cleanUser)
   if (userRecord && (userRecord.status === 'suspended' || userRecord.status === 'inactive')) {
     if (userRecord.password === cleanPass) {
@@ -485,7 +460,6 @@ export function verifyUserCredentials(username, password) {
     }
   }
 
-  // Strict check: Account MUST exist in directory, be active, and password MUST match exactly
   const match = users.find(
     (u) =>
       u.status === 'active' &&
@@ -559,19 +533,15 @@ export function areFeatureParentTabsDisabled(permKey, activePermissions = []) {
   if (meta.type !== 'feature') return false
   const parentTabs = meta.parentTabs || []
   if (parentTabs.length === 0) return false
-  // Feature can only be functional if at least one of its parent tabs is active
   const hasActiveParent = parentTabs.some((tabKey) => activePermissions.includes(tabKey))
   return !hasActiveParent
 }
 
 export function getAffectedFeaturesWhenTabDisabled(tabKey, currentPerms = []) {
-  // If tabKey is removed, find all features that lose their last remaining parent tab
   const remainingWithoutTab = currentPerms.filter((k) => k !== tabKey)
   return PERMISSIONS.filter((p) => {
     if (p.type !== 'feature' || !p.parentTabs?.includes(tabKey)) return false
-    // Only care if the feature is currently granted
     if (!currentPerms.includes(p.key)) return false
-    // Check if any other parent tab remains active
     const hasRemainingParent = p.parentTabs.some((pt) => remainingWithoutTab.includes(pt))
     return !hasRemainingParent
   })
@@ -582,7 +552,6 @@ export function hasPermission(currentUser, permKey, roles = null) {
   const perms = getUserEffectivePermissions(currentUser, roles)
   if (!perms.includes(permKey)) return false
 
-  // Strict check: if it is an in-tab feature, at least one of its parent tabs MUST be active
   const meta = getPermissionMeta(permKey)
   if (meta.type === 'feature' && meta.parentTabs?.length > 0) {
     const hasParentTab = meta.parentTabs.some((tabKey) => perms.includes(tabKey))
@@ -591,4 +560,3 @@ export function hasPermission(currentUser, permKey, roles = null) {
 
   return true
 }
-

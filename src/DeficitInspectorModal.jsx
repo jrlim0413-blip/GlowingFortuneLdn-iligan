@@ -74,17 +74,16 @@ export default function DeficitInspectorModal({
   selectedDate,
   branchName = 'LDN',
 }) {
-  const [activeModalTab, setActiveModalTab] = useState('breakdown') // 'breakdown' | 'cashier_claims'
-  const [selectedDrawFilter, setSelectedDrawFilter] = useState('all') // 'all', 'morning', 'afternoon', 'evening', 'remittance', or specific time '10:30 AM', etc.
+  const [activeModalTab, setActiveModalTab] = useState('breakdown') 
+  const [selectedDrawFilter, setSelectedDrawFilter] = useState('all') 
   const [selectedSupervisor, setSelectedSupervisor] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState('grouped') // 'grouped' | 'flat'
-  const [sortBy, setSortBy] = useState('deficit-desc') // 'deficit-desc', 'deficit-asc', 'name-asc', 'spvr-asc'
+  const [viewMode, setViewMode] = useState('grouped') 
+  const [sortBy, setSortBy] = useState('deficit-desc') 
   const [copiedNotice, setCopiedNotice] = useState(false)
 
-  // Payout Shortage Replenishment State (Pure Database - No LocalStorage)
   const [cashierClaims, setCashierClaims] = useState([])
-  const [dbSyncStatus, setDbSyncStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
+  const [dbSyncStatus, setDbSyncStatus] = useState('idle') 
   const [pendingDeleteClaim, setPendingDeleteClaim] = useState(null)
   const [isDeletingClaim, setIsDeletingClaim] = useState(false)
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
@@ -94,15 +93,14 @@ export default function DeficitInspectorModal({
     let isMounted = true
 
     async function loadClaimsFromDatabase() {
-      // Fetch directly from Supabase database table
       const res = await getCashierClaimsFromSupabase(branchName, selectedDate)
       if (!isMounted) return
 
       if (res.success && res.data) {
-        setCashierClaims(res.data) // Set state directly from DB
+        setCashierClaims(res.data) 
         setDbSyncStatus(res.data.length > 0 ? 'saved' : 'idle')
       } else {
-        setCashierClaims([]) // Default to empty table if no records
+        setCashierClaims([]) 
       }
     }
 
@@ -123,7 +121,6 @@ export default function DeficitInspectorModal({
     const res = await saveCashierClaimsToSupabase(branchName, selectedDate, cashierClaims)
     if (res.success) {
       setDbSyncStatus('saved')
-      // Mark all current rows as saved in DB
       setCashierClaims((prev) => prev.map((item) => ({ ...item, isSavedInDb: true })))
       setTimeout(() => setDbSyncStatus('idle'), 3000)
     } else {
@@ -212,7 +209,6 @@ export default function DeficitInspectorModal({
     })
   }
 
-  // Close on Escape key
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen) {
@@ -223,7 +219,6 @@ export default function DeficitInspectorModal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
-  // Extract all individual draw times
   const allDrawTimes = useMemo(() => {
     const times = []
     drawGroups.forEach((g) => {
@@ -234,7 +229,6 @@ export default function DeficitInspectorModal({
     return times
   }, [drawGroups])
 
-  // Build the complete list of negative balance entries
   const allDeficitRecords = useMemo(() => {
     const records = []
 
@@ -248,7 +242,6 @@ export default function DeficitInspectorModal({
         const commissionRate = agent.commissionRate || 10
         const totalSalary = agent.totalSalary !== undefined ? agent.totalSalary : (agent.totalGross * (commissionRate / 100))
 
-        // 1. Morning Rotation (1st Draw)
         const morningGross = getGroupedDrawTotal(agent, drawGroups[0], 'gross')
         const morningHits = getGroupedDrawTotal(agent, drawGroups[0], 'hits')
         const morningNet = morningGross - morningHits
@@ -271,7 +264,6 @@ export default function DeficitInspectorModal({
           })
         }
 
-        // 2. Afternoon Rotation (2nd Draw with carryover)
         const afternoonGross = getGroupedDrawTotal(agent, drawGroups[1], 'gross')
         const afternoonHits = getGroupedDrawTotal(agent, drawGroups[1], 'hits')
         const afternoonNet = getRotationNet(agent, drawGroups[1], drawGroups)
@@ -294,7 +286,6 @@ export default function DeficitInspectorModal({
           })
         }
 
-        // 3. Evening Rotation (3rd Draw with carryover)
         const eveningGross = getGroupedDrawTotal(agent, drawGroups[2], 'gross')
         const eveningHits = getGroupedDrawTotal(agent, drawGroups[2], 'hits')
         const eveningNet = getRotationNet(agent, drawGroups[2], drawGroups)
@@ -317,7 +308,6 @@ export default function DeficitInspectorModal({
           })
         }
 
-        // 4. End-of-Day Remittance (3rd Net minus Commission)
         const eveningGroupNet = getRotationNet(agent, drawGroups[2], drawGroups)
         const remittanceNetSales = eveningGroupNet - totalSalary
         if (remittanceNetSales < 0) {
@@ -340,7 +330,6 @@ export default function DeficitInspectorModal({
           })
         }
 
-        // 5. Individual Draw Times (10:30 AM, 2:00 PM, 3:00 PM, 5:00 PM, 7:00 PM, 9:00 PM)
         allDrawTimes.forEach((time) => {
           const drawMap = agent.draws
           const drawData = drawMap instanceof Map ? drawMap.get(time) : drawMap?.[time]
@@ -372,14 +361,12 @@ export default function DeficitInspectorModal({
     return records
   }, [supervisorReports, drawGroups, allDrawTimes])
 
-  // Supervisors with deficit counts
   const supervisorList = useMemo(() => {
     const map = new Map()
     supervisorReports.forEach((s) => {
       map.set(s.supervisor, 0)
     })
     allDeficitRecords.forEach((r) => {
-      // count unique agents or records
       map.set(r.supervisor, (map.get(r.supervisor) || 0) + 1)
     })
     return Array.from(map.entries()).map(([name, count]) => ({
@@ -388,29 +375,23 @@ export default function DeficitInspectorModal({
     }))
   }, [supervisorReports, allDeficitRecords])
 
-  // Filtered & Sorted Records
   const filteredRecords = useMemo(() => {
     let result = allDeficitRecords
 
-    // Draw filter
     if (selectedDrawFilter === 'all') {
-      // In "all", show the primary rotations and remittance records (skip raw individual times to prevent double-counting unless selected)
       result = result.filter((r) => r.drawCategory === 'rotation' || r.drawCategory === 'remittance')
     } else if (selectedDrawFilter === 'all_including_times') {
       result = result
     } else if (['morning', 'afternoon', 'evening', 'remittance'].includes(selectedDrawFilter)) {
       result = result.filter((r) => r.drawKey === selectedDrawFilter)
     } else {
-      // Specific individual draw time like '10:30 AM'
       result = result.filter((r) => r.drawKey === selectedDrawFilter)
     }
 
-    // Supervisor filter
     if (selectedSupervisor !== 'all') {
       result = result.filter((r) => r.supervisor === selectedSupervisor)
     }
 
-    // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim()
       result = result.filter(
@@ -421,7 +402,6 @@ export default function DeficitInspectorModal({
       )
     }
 
-    // Sorting
     return [...result].sort((a, b) => {
       if (sortBy === 'deficit-desc') return b.deficit - a.deficit
       if (sortBy === 'deficit-asc') return a.deficit - b.deficit
@@ -431,7 +411,6 @@ export default function DeficitInspectorModal({
     })
   }, [allDeficitRecords, selectedDrawFilter, selectedSupervisor, searchQuery, sortBy])
 
-  // Grouped by Supervisor
   const groupedBySupervisor = useMemo(() => {
     const groups = new Map()
     filteredRecords.forEach((rec) => {
@@ -452,7 +431,6 @@ export default function DeficitInspectorModal({
     return Array.from(groups.values()).sort((a, b) => b.totalDeficit - a.totalDeficit)
   }, [filteredRecords])
 
-  // Summary Metrics
   const summaryMetrics = useMemo(() => {
     const totalDeficit = filteredRecords.reduce((sum, r) => sum + r.deficit, 0)
     const uniqueAgentKeys = new Set(filteredRecords.map((r) => `${r.supervisor}-${r.agentKey}`))
@@ -469,7 +447,6 @@ export default function DeficitInspectorModal({
     }
   }, [filteredRecords])
 
-  // Helper to format currency/numbers for Viber
   const formatViberNum = (num) => {
     const val = Number(num) || 0
     return val.toLocaleString('en-PH', {
@@ -478,7 +455,6 @@ export default function DeficitInspectorModal({
     })
   }
 
-  // Copy Deficits for Viber / Messenger
   const handleCopySummary = () => {
     if (filteredRecords.length === 0) return
 
@@ -486,7 +462,6 @@ export default function DeficitInspectorModal({
     text += `🏢 Branch: ${branchName} | 📅 Date: ${selectedDate}\n`
     text += `-------------------------------------------\n`
 
-    // Group by Supervisor -> then by Draw
     const supervisorMap = new Map()
 
     filteredRecords.forEach((r) => {
@@ -495,7 +470,6 @@ export default function DeficitInspectorModal({
       }
       const drawMap = supervisorMap.get(r.supervisor)
 
-      // Normalize draw header
       let drawHeader = '1ST DRAW'
       if (r.drawKey === 'afternoon' || r.drawTitle?.toLowerCase().includes('2nd')) {
         drawHeader = '2ND DRAW'
@@ -536,7 +510,6 @@ export default function DeficitInspectorModal({
     })
   }
 
-  // Export to CSV
   const handleExportCSV = () => {
     if (filteredRecords.length === 0) return
 
@@ -568,7 +541,7 @@ export default function DeficitInspectorModal({
   const modalNode = (
     <div className="deficit-modal-backdrop" onClick={onClose}>
       <div className="deficit-modal-shell" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        {/* Top Header */}
+        {}
         <div className="deficit-modal-header">
           <div className="deficit-header-title-wrap">
             <div className="deficit-icon-pill">
@@ -633,7 +606,7 @@ export default function DeficitInspectorModal({
           </div>
         </div>
 
-        {/* Main Modal Navigation Tabs */}
+        {}
         <div className="deficit-main-nav-bar">
           <button
             type="button"
@@ -826,7 +799,7 @@ export default function DeficitInspectorModal({
         {activeModalTab === 'breakdown' && (
           <>
 
-        {/* Executive KPI Summary Cards */}
+        {}
         <div className="deficit-kpi-grid">
           <div className="deficit-kpi-card total-deficit-card">
             <span className="deficit-kpi-label">TOTAL NEGATIVE EXPOSURE</span>
@@ -877,7 +850,7 @@ export default function DeficitInspectorModal({
           </div>
         </div>
 
-        {/* Filter Controls Bar */}
+        {}
         <div className="deficit-controls-bar">
           <div className="deficit-draw-tabs-row">
             <span className="deficit-filter-caption">DRAW ROTATION:</span>
@@ -921,7 +894,7 @@ export default function DeficitInspectorModal({
           </div>
 
           <div className="deficit-secondary-controls">
-            {/* Supervisor Selector */}
+            {}
             <div className="deficit-control-item">
               <label htmlFor="deficit-spvr-select">Supervisor:</label>
               <select
@@ -939,7 +912,7 @@ export default function DeficitInspectorModal({
               </select>
             </div>
 
-            {/* Specific Draw Time drilldown */}
+            {}
             <div className="deficit-control-item">
               <label htmlFor="deficit-time-select">Specific Time:</label>
               <select
@@ -959,7 +932,7 @@ export default function DeficitInspectorModal({
               </select>
             </div>
 
-            {/* Search Input */}
+            {}
             <div className="deficit-search-box">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
@@ -983,7 +956,7 @@ export default function DeficitInspectorModal({
               )}
             </div>
 
-            {/* View Mode Toggle */}
+            {}
             <div className="deficit-view-toggle">
               <button
                 type="button"
@@ -1005,7 +978,7 @@ export default function DeficitInspectorModal({
           </div>
         </div>
 
-        {/* Content Area */}
+        {}
         <div className="deficit-modal-body">
           {filteredRecords.length === 0 ? (
             <div className="deficit-empty-state">
@@ -1036,7 +1009,6 @@ export default function DeficitInspectorModal({
               )}
             </div>
           ) : viewMode === 'grouped' ? (
-            /* Grouped by Supervisor View */
             <div className="deficit-groups-list">
               {groupedBySupervisor.map((group) => (
                 <div key={group.supervisor} className="deficit-spvr-card">
@@ -1130,7 +1102,6 @@ export default function DeficitInspectorModal({
               ))}
             </div>
           ) : (
-            /* Flat Ranking Table View */
             <div className="deficit-flat-table-wrap">
               <table className="deficit-data-table flat-table">
                 <thead>
@@ -1194,7 +1165,7 @@ export default function DeficitInspectorModal({
           </>
         )}
 
-        {/* Modal Footer */}
+        {}
         <div className="deficit-modal-footer">
           <div className="footer-left">
             <span>
@@ -1209,7 +1180,7 @@ export default function DeficitInspectorModal({
           </div>
         </div>
 
-        {/* Confirmation Modal for Row Deletion */}
+        {}
         <ConfirmActionModal
           isOpen={Boolean(pendingDeleteClaim)}
           title="Delete Payout Shortage Entry?"
@@ -1241,7 +1212,7 @@ export default function DeficitInspectorModal({
           onCancel={() => !isDeletingClaim && setPendingDeleteClaim(null)}
         />
 
-        {/* Confirmation Modal for Save to Database */}
+        {}
         <ConfirmActionModal
           isOpen={showSaveConfirm}
           title="Save Shortage Replenishments to Database?"

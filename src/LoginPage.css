@@ -1,6 +1,4 @@
-/* ==========================================================================
-   STL LDN STAFF PORTAL — LUXURY ENTERPRISE SUITE & PALETTE THEMES
-   ========================================================================== */
+
 
 :root {
   --stl-blue-darkest: #050d22;
@@ -16,7 +14,7 @@
   --stl-font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Master Viewport */
+
 .stl-login-screen {
   position: fixed;
   inset: 0;
@@ -38,7 +36,7 @@
   transform: scale(1.008);
 }
 
-/* 2-Column Responsive Split Container */
+
 .stl-login-container {
   display: flex;
   width: 100%;
@@ -46,9 +44,7 @@
   overflow: hidden;
 }
 
-/* ==========================================================================
-   THEME PALETTE 1: MIDNIGHT OBSIDIAN (FLAGSHIP DEFAULT)
-   ========================================================================== */
+
 .stl-login-screen.theme-obsidian {
   background: #060913;
 }
@@ -107,9 +103,7 @@
 }
 .theme-obsidian .stl-demo-label { color: #93c5fd; }
 
-/* ==========================================================================
-   THEME PALETTE 2: ROYAL COBALT
-   ========================================================================== */
+
 .stl-login-screen.theme-royal {
   background: #061336;
 }
@@ -159,9 +153,7 @@
 }
 .theme-royal .stl-demo-label { color: #bfdbfe; }
 
-/* ==========================================================================
-   THEME PALETTE 3: AURORA NAVY
-   ========================================================================== */
+
 .stl-login-screen.theme-aurora {
   background: #040e1b;
 }
@@ -215,9 +207,7 @@
 }
 .theme-aurora .stl-demo-label { color: #a5f3fc; }
 
-/* ==========================================================================
-   THEME PALETTE 4: EXECUTIVE SLATE (HIGH-CONTRAST DUAL SPLIT)
-   ========================================================================== */
+
 .stl-login-screen.theme-executive {
   background: #081635;
 }
@@ -262,9 +252,7 @@
 }
 .theme-executive .stl-demo-label { color: #1e40af; }
 
-/* ==========================================================================
-   LEFT WORKSPACE HERO PANEL (60% width)
-   ========================================================================== */
+
 .stl-hero-panel {
   flex: 1.75;
   position: relative;
@@ -278,7 +266,7 @@
   transition: background 0.45s ease;
 }
 
-/* Ambient Radial Lighting */
+
 .stl-hero-glow-orb-top {
   position: absolute;
   top: -120px;
@@ -313,7 +301,7 @@
   100% { transform: translate(-40px, -30px) scale(1.15); opacity: 0.95; }
 }
 
-/* Geometric Depth Grid */
+
 .stl-hero-ambient-grid {
   position: absolute;
   inset: 0;
@@ -324,7 +312,7 @@
   pointer-events: none;
 }
 
-/* Brand Header */
+
 .stl-hero-header {
   position: relative;
   z-index: 5;
@@ -346,7 +334,7 @@
   gap: 12px;
 }
 
-/* Live Theme Switcher Bar */
+
 .stl-theme-switcher-bar {
   display: flex;
   align-items: center;
@@ -414,7 +402,7 @@
 .swatch-aurora { background: #2dd4bf; box-shadow: 0 0 6px #2dd4bf; }
 .swatch-executive { background: #ffffff; box-shadow: 0 0 4px #ffffff; }
 
-/* Live Terminal Status Pill */
+
 .stl-live-system-pill {
   display: flex;
   align-items: center;
@@ -457,7 +445,7 @@
   border-radius: 4px;
 }
 
-/* Logo icon wrapper for official STL monogram */
+
 .stl-brand-icon-wrap {
   display: flex;
   align-items: center;
@@ -538,9 +526,7 @@
   letter-spacing: 0.2px;
 }
 
-/* ==========================================================================
-   CAROUSEL VIEWPORT & SLIDES
-   ========================================================================== */
+
 .stl-carousel-viewport {
   position: relative;
   z-index: 5;
@@ -708,9 +694,7 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-/* ==========================================================================
-   CAROUSEL CENTERPIECE CARDS (3 SLIDE VARIANTS)
-   ========================================================================== */
+
 .stl-emblem-card-wrapper {
   display: flex;
   align-items: center;
@@ -747,7 +731,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* Glass Card Gleam Sheen */
+
 .stl-glass-sheen {
   position: absolute;
   top: 0;
@@ -774,7 +758,7 @@
   100% { left: 160%; }
 }
 
-/* SLIDE 1: Brand Showcase with Enhanced LB.png */
+
 .brand-showcase-card {
   animation: stlCardFloat 7s ease-in-out infinite alternate 1s;
 }
@@ -885,7 +869,7 @@
   color: #60a5fa;
 }
 
-/* SLIDE 2: Matrix Showcase Card */
+
 .matrix-showcase-card {
   flex-direction: column;
   align-items: stretch;
@@ -1007,7 +991,7 @@
   color: #94a3b8;
 }
 
-/* SLIDE 3: Statement Showcase Card (Confidential Mode) */
+
 .statement-showcase-card {
   flex-direction: column;
   align-items: stretch;
@@ -1267,9 +1251,7 @@
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-/* ==========================================================================
-   CAROUSEL CONTROLS BAR (Nav Buttons & Indicator Pills)
-   ========================================================================== */
+
 .stl-carousel-controls-bar {
   display: flex;
   align-items: center;
@@ -1354,9 +1336,7 @@
   to { width: 100%; }
 }
 
-/* ==========================================================================
-   BOTTOM STAT PILLARS - REDESIGNED BENTO TELEMETRY DECK
-   ========================================================================== */
+
 .stl-hero-features-row {
   position: relative;
   z-index: 5;
@@ -1668,7 +1648,7 @@
   50% { opacity: 0.65; box-shadow: none; }
 }
 
-/* Bottom Left Security Note */
+
 .stl-hero-footer {
   position: relative;
   z-index: 5;
@@ -1713,9 +1693,7 @@
   line-height: 1.3;
 }
 
-/* ==========================================================================
-   BOTTOM RIGHT PCSO BACKGROUND WATERMARK EMBLEM (HALF-LOGO PEEKING OUT)
-   ========================================================================== */
+
 .stl-corner-pcso-bg-emblem {
   position: absolute;
   bottom: -115px;
@@ -1801,9 +1779,7 @@
   padding: 1px;
 }
 
-/* ==========================================================================
-   TOP LEFT STL BACKGROUND WATERMARK EMBLEM (HALF-LOGO PEEKING OUT)
-   ========================================================================== */
+
 .stl-corner-stl-bg-emblem {
   position: absolute;
   top: -110px;
@@ -1881,9 +1857,7 @@
   transition: transform 0.6s ease;
 }
 
-/* ==========================================================================
-   RIGHT AUTHENTICATION GATEWAY PANEL (40% width)
-   ========================================================================== */
+
 .stl-auth-panel {
   flex: 1.05;
   display: flex;
@@ -1896,7 +1870,7 @@
   transition: all 0.45s ease;
 }
 
-/* Floating Authentication Card */
+
 .stl-auth-card {
   width: 100%;
   max-width: 418px;
@@ -1910,9 +1884,7 @@
   margin-top: 40px;
 }
 
-/* ==========================================================================
-   CARD TOP CIRCULAR BRAND CONTAINER
-   ========================================================================== */
+
 .stl-auth-card-emblem-wrap {
   display: flex;
   justify-content: center;
@@ -2003,7 +1975,7 @@
   }
 }
 
-/* Top Glowing Laser Rim Beam */
+
 .stl-auth-card-top-beam {
   position: absolute;
   top: 0;
@@ -2016,7 +1988,7 @@
   pointer-events: none;
 }
 
-/* Terminal Security Status Chip */
+
 .stl-auth-status-chip {
   display: inline-flex;
   align-items: center;
@@ -2054,7 +2026,7 @@
   font-weight: 800;
 }
 
-/* Card Header */
+
 .stl-card-header {
   margin-bottom: 22px;
 }
@@ -2117,7 +2089,7 @@
   50% { opacity: 0.4; transform: scale(0.75); }
 }
 
-/* RBAC Role Quick Presets Selector */
+
 .stl-role-presets-container {
   margin-top: 14px;
   margin-bottom: 12px;
@@ -2210,7 +2182,7 @@
   box-shadow: 0 0 6px #facc15;
 }
 
-/* Demo Quick Helper Pill fallback */
+
 .stl-demo-helper-bar {
   margin-top: 14px;
   margin-bottom: 8px;
@@ -2303,7 +2275,7 @@
   transform: translateX(3px);
 }
 
-/* Error Banner */
+
 .stl-auth-error-banner {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -2326,7 +2298,7 @@
   40%, 60% { transform: translate3d(3px, 0, 0); }
 }
 
-/* Form Styles */
+
 .stl-login-form {
   display: flex;
   flex-direction: column;
@@ -2403,7 +2375,7 @@
   transform: scale(1.08);
 }
 
-/* Options Row */
+
 .stl-form-options-row {
   display: flex;
   align-items: center;
@@ -2454,7 +2426,7 @@
   transform: translateX(1px);
 }
 
-/* Primary Action Login Button with Shimmer and State Transitions */
+
 .stl-submit-btn {
   width: 100%;
   height: 45px;
@@ -2493,7 +2465,7 @@
   cursor: not-allowed;
 }
 
-/* Light shimmer sweep on submit button */
+
 .stl-btn-shimmer {
   position: absolute;
   top: 0;
@@ -2517,7 +2489,7 @@
   100% { left: 200%; }
 }
 
-/* Success Transition State */
+
 .stl-submit-btn.btn-success-state {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
   box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5) !important;
@@ -2544,7 +2516,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Bottom Card Strip */
+
 .stl-card-footer-strip {
   margin-top: 24px;
   display: flex;
@@ -2567,9 +2539,7 @@
   text-transform: uppercase;
 }
 
-/* ==========================================================================
-   FORGOT PASSWORD MODAL
-   ========================================================================== */
+
 .stl-modal-overlay {
   position: fixed;
   inset: 0;
@@ -2714,9 +2684,7 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-/* ==========================================================================
-   RESPONSIVE DESIGN (Tablets & Mobile)
-   ========================================================================== */
+
 @media (max-width: 1080px) {
   .stl-carousel-slide {
     grid-template-columns: 1fr;

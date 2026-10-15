@@ -1,4 +1,4 @@
-/* Confirmation Action Modal Styles */
+
 .confirm-modal-overlay {
   position: fixed;
   top: 0;
@@ -55,7 +55,7 @@
   }
 }
 
-/* Icon Badges */
+
 .confirm-modal-icon-badge {
   width: 64px;
   height: 64px;
@@ -108,7 +108,7 @@
   }
 }
 
-/* Typography */
+
 .confirm-modal-title {
   color: #f8fafc;
   font-size: 1.35rem;
@@ -124,7 +124,7 @@
   margin: 0 0 1.25rem 0;
 }
 
-/* Details Card */
+
 .confirm-modal-details-card {
   width: 100%;
   background: rgba(15, 23, 42, 0.75);
@@ -162,7 +162,7 @@
   font-weight: 600;
 }
 
-/* Spinner Animations */
+
 .confirm-spinner-ring {
   width: 28px;
   height: 28px;
@@ -187,7 +187,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Action Buttons */
+
 .confirm-modal-actions {
   display: flex;
   gap: 0.75rem;

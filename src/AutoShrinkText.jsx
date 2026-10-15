@@ -1,11 +1,5 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 
-/**
- * AutoShrinkText
- * Dynamically shrinks DOM font-size if text/figures overflow container width.
- * Prevents text-overflow ellipsis (...) and clipping completely.
- * Works seamlessly in both screen UI and Print Preview / Print output.
- */
 export function AutoShrinkText({
   children,
   className = '',
@@ -24,13 +18,11 @@ export function AutoShrinkText({
     const content = contentRef.current;
     if (!container || !content) return;
 
-    // Reset styles on content span to measure true unconstrained scrollWidth
     content.style.fontSize = '';
     content.style.lineHeight = '';
     content.style.maxWidth = 'none';
     content.style.width = 'auto';
 
-    // Ensure container doesn't truncate or force ellipsis during measurement
     container.style.textOverflow = 'clip';
 
     const baseFontSize = parseFloat(window.getComputedStyle(container).fontSize) || 10.5;
@@ -38,8 +30,6 @@ export function AutoShrinkText({
     const contentWidth = content.scrollWidth;
 
     if (containerWidth > 0 && contentWidth > containerWidth + 0.2) {
-      // Content exceeds container width — scale font size down proportionally
-      // Safety multiplier 0.94 ensures sub-pixel font rendering in print mode never clips
       const ratio = (containerWidth / contentWidth) * 0.94;
       const calculatedSize = Math.max(minFontSize, Math.floor(baseFontSize * ratio * 10) / 10);
 
@@ -70,7 +60,6 @@ export function AutoShrinkText({
 
     const handleResize = () => {
       checkAndAdjustSize();
-      // Second tick for print rendering engine reflows
       setTimeout(checkAndAdjustSize, 30);
     };
 

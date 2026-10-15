@@ -9,33 +9,25 @@ if (-not (Test-Path $uploadedPath)) {
     exit 1
 }
 
-# 1. Directly copy to public/LB.png so the raw asset is updated
 Copy-Item -Path $uploadedPath -Destination $publicLbPath -Force
 Write-Output "Copied raw image to $publicLbPath"
 
-# 2. Process for high quality transparent rendering on dark surfaces
 $src = [System.Drawing.Bitmap]::new($uploadedPath)
 $w = $src.Width
 $h = $src.Height
 Write-Output "Dimensions: ${w}x${h}"
 
-# Create 32-bit ARGB bitmap for transparency
 $dest = [System.Drawing.Bitmap]::new($w, $h, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 
-# Sample background color from corners
 $cornerColor = $src.GetPixel(5, 5)
 Write-Output "Background color at corner: R=$($cornerColor.R), G=$($cornerColor.G), B=$($cornerColor.B)"
 
-# Remove solid white/near-white background so it renders cleanly without a white box on dark themes
 for ($y = 0; $y -lt $h; $y++) {
     for ($x = 0; $x -lt $w; $x++) {
         $pixel = $src.GetPixel($x, $y)
-        # Check if near white (background)
         if ($pixel.R -ge 245 -and $pixel.G -ge 245 -and $pixel.B -ge 245) {
-            # Fully transparent
             $dest.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0))
         } elseif ($pixel.R -ge 230 -and $pixel.G -ge 230 -and $pixel.B -ge 230) {
-            # Soft feathered edge anti-aliasing
             $minVal = [Math]::Min($pixel.R, [Math]::Min($pixel.G, $pixel.B))
             $alpha = [int]((255 - $minVal) / 25.0 * 255.0)
             $alpha = [Math]::Max(0, [Math]::Min(255, $alpha))

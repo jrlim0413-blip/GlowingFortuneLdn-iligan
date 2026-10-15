@@ -9,7 +9,7 @@ export default function ConfirmActionModal({
   details = null,
   confirmText = 'Yes, Proceed',
   cancelText = 'Cancel',
-  confirmVariant = 'danger', // 'danger' | 'warning' | 'primary'
+  confirmVariant = 'danger', 
   isProcessing = false,
   processingText = 'Processing...',
   onConfirm,

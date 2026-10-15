@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Icon } from './App' // Icon helper from App.jsx or define custom icons
+import { Icon } from './App' 
 
-// Paper Presets at 96 DPI (pixels) & mm/inches metadata
 export const PAPER_FORMATS = {
   a4: {
     id: 'a4',
@@ -58,28 +57,22 @@ export const MARGIN_PRESETS = {
   zero:    { id: 'zero',    name: 'Zero Margins (0mm)', top: '0mm', right: '0mm', bottom: '0mm', left: '0mm', px: 0 },
 }
 
-const STORAGE_KEY = 'luckybet_custom_print_browser_settings'
+let inMemoryPrintSettings = {
+  paperFormat: 'a4',
+  orientation: 'portrait',
+  marginPreset: 'compact',
+  autoFitOnePage: true,
+  fontScale: 100,
+  colorMode: 'color',
+  showHeader: true,
+  showSignatures: true,
+  showFooterTag: true,
+  customWidthMm: 210,
+  customHeightMm: 297,
+}
 
 export function getSavedPrintSettings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) return JSON.parse(saved)
-  } catch (e) {
-    console.warn('Unable to read print settings:', e)
-  }
-  return {
-    paperFormat: 'a4',
-    orientation: 'portrait',
-    marginPreset: 'compact',
-    autoFitOnePage: true,
-    fontScale: 100,
-    colorMode: 'color',
-    showHeader: true,
-    showSignatures: true,
-    showFooterTag: true,
-    customWidthMm: 210,
-    customHeightMm: 297,
-  }
+  return { ...inMemoryPrintSettings }
 }
 
 export function CustomPrintBrowserModal({
@@ -92,10 +85,10 @@ export function CustomPrintBrowserModal({
   canPrint = true,
   currentUser = null,
   onSelectSupervisor,
-  children, // The SupervisorStatementTable or statement content
+  children,
 }) {
   const [settings, setSettings] = useState(getSavedPrintSettings)
-  const [viewZoom, setViewZoom] = useState(100) // % zoom inside studio stage
+  const [viewZoom, setViewZoom] = useState(100)
   const [computedFitScale, setComputedFitScale] = useState(100)
   const [isMeasuring, setIsMeasuring] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -103,16 +96,10 @@ export function CustomPrintBrowserModal({
   const stageRef = useRef(null)
   const pageFrameRef = useRef(null)
 
-  // Save settings automatically
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-    } catch (e) {
-      console.warn('Failed to save print settings:', e)
-    }
+    inMemoryPrintSettings = { ...settings }
   }, [settings])
 
-  // Active paper configuration
   const currentPaper = useMemo(() => {
     if (settings.paperFormat === 'custom') {
       const wMm = Number(settings.customWidthMm) || 210
@@ -132,7 +119,6 @@ export function CustomPrintBrowserModal({
 
   const currentMargin = MARGIN_PRESETS[settings.marginPreset] || MARGIN_PRESETS.compact
 
-  // Measure Auto-Fit scaling for custom selected paper format
   useLayoutEffect(() => {
     if (!isOpen || !pageFrameRef.current) return
 
@@ -167,17 +153,14 @@ export function CustomPrintBrowserModal({
 
   const activeScale = settings.autoFitOnePage ? computedFitScale : settings.fontScale
 
-  // Handle direct print action with injected page rules
   const handlePrintDocument = () => {
     if (!canPrint) {
       alert(`Access Restricted: Printing statements is locked for @${currentUser?.username || 'user'} in the Role Matrix.`)
       return
     }
 
-    // Add print active class to body
     document.body.classList.add('custom-print-active')
 
-    // Trigger browser print
     window.print()
 
     setTimeout(() => {
@@ -187,7 +170,6 @@ export function CustomPrintBrowserModal({
 
   if (!isOpen) return null
 
-  // Format CSS string for dynamic injection
   const dynamicPageCss = `
     @page {
       size: ${currentPaper.id === 'custom' ? `${currentPaper.widthMm}mm ${currentPaper.heightMm}mm` : `${currentPaper.name.split(' ')[0]} ${settings.orientation}`} !important;
@@ -214,7 +196,7 @@ export function CustomPrintBrowserModal({
 
       <div className="custom-print-browser-shell" onClick={(e) => e.stopPropagation()}>
         
-        {/* ── TOP CONTROL HEADER (Studio Bar) ──────────────────────────────── */}
+        {}
         <div className="custom-print-topbar no-print">
           <div className="print-topbar-left">
             <button
@@ -235,7 +217,7 @@ export function CustomPrintBrowserModal({
           </div>
 
           <div className="print-topbar-center">
-            {/* Quick Supervisor Switcher */}
+            {}
             {allSupervisors.length > 1 && onSelectSupervisor && (
               <div className="print-supervisor-select-wrap">
                 <Icon name="user" size={13} />
@@ -266,7 +248,7 @@ export function CustomPrintBrowserModal({
               </div>
             )}
 
-            {/* Stage Zoom Controls */}
+            {}
             <div className="stage-zoom-controls">
               <button
                 type="button"
@@ -318,10 +300,10 @@ export function CustomPrintBrowserModal({
           </div>
         </div>
 
-        {/* ── MAIN BODY: SIDEBAR CONFIG + VISUAL PAPER STAGE ───────────────── */}
+        {}
         <div className="custom-print-body">
 
-          {/* LEFT SIDEBAR: CONFIGURATION CONTROLS */}
+          {}
           {sidebarOpen && (
             <aside className="custom-print-sidebar no-print">
               <div className="sidebar-section">
@@ -522,7 +504,7 @@ export function CustomPrintBrowserModal({
             </aside>
           )}
 
-          {/* RIGHT STAGE: VISUAL PAPER DOCUMENT VIEWPORT */}
+          {}
           <main className="custom-print-stage" ref={stageRef}>
             <div
               className="paper-viewport-transform"
@@ -531,7 +513,7 @@ export function CustomPrintBrowserModal({
                 transformOrigin: 'top center',
               }}
             >
-              {/* VISUAL PAPER FRAME */}
+              {}
               <div
                 className={`visual-paper-sheet ${settings.colorMode === 'bw' ? 'mode-monochrome' : ''}`}
                 style={{

@@ -61,9 +61,7 @@ button { font: inherit; }
 @media (max-width: 560px) { .metric-grid { grid-template-columns: 1fr; gap: 8px; }.metric-card { min-height: 76px; }.welcome-row { flex-direction: column; }.date-filter { align-items: stretch; flex-wrap: wrap; }.date-field, .apply-button { flex: 1 1 100%; }.date-helper { padding-bottom: 0; }.panel-heading { align-items: flex-start; flex-direction: column; gap: 6px; }.topbar h1 { font-size: 18px; } }
 .draw-summary-heading { flex-wrap: wrap; }.draw-summary-grid { min-width: 580px; }.draw-summary { overflow-x: auto; }
 .app-shell { background: #f4f6f9; }.sidebar { padding: 20px 12px 16px; }.brand { gap: 10px; padding: 0 8px 24px; }.brand-logo { width: 64px; height: 40px; flex-basis: 64px; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.14)); }.nav-item { border-radius: 7px; padding: 8px 10px; }.nav-icon { width: 17px; height: 17px; display: grid; place-items: center; }.ui-icon { display: block; flex: 0 0 auto; }.refresh-button { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 6px 10px; }
-/* ==========================================================================
-   MATRIX TABLE (COMPACT HEADERS, SNUG FRONT AGENT COLUMN & BALANCED CELLS)
-   ========================================================================== */
+
 
 .matrix-table {
   width: 100%;
@@ -72,7 +70,7 @@ button { font: inherit; }
   border-collapse: collapse;
 }
 
-/* Compact, clean padding across headers and cells - row indents removed */
+
 .matrix-table th,
 .matrix-table td {
   padding: 3px 6px !important;
@@ -81,7 +79,7 @@ button { font: inherit; }
   white-space: nowrap;
 }
 
-/* Sticky First Column (Agent Name) - Generous width so names never get cut off */
+
 .matrix-table th.agent-header,
 .matrix-table th:first-child {
   position: sticky !important;
@@ -134,7 +132,7 @@ button { font: inherit; }
   border-right: 1px solid #d5deea !important;
 }
 
-/* Compact Top Headers (1st Draw, 2nd Draw, 3rd Draw) */
+
 .matrix-table thead tr:first-child th {
   height: 28px;
   vertical-align: middle;
@@ -161,7 +159,7 @@ button { font: inherit; }
   line-height: 1.1;
 }
 
-/* Compact Subheadings (Gross, Hits, Net) */
+
 .matrix-table thead tr:nth-child(2) th {
   height: 22px;
   vertical-align: middle;
@@ -183,7 +181,7 @@ button { font: inherit; }
   letter-spacing: .2px;
 }
 
-/* Carryover Headers (1st Net + 2nd Gross, 2nd Net + 3rd Gross) */
+
 .matrix-table .carryover-header {
   padding: 2px 5px !important;
   text-align: right !important;
@@ -199,7 +197,7 @@ button { font: inherit; }
   text-align: right;
 }
 
-/* Numeric Draw Cells */
+
 .matrix-table td:not(:first-child) {
   text-align: right;
   font-family: 'Manrope', sans-serif;
@@ -208,7 +206,7 @@ button { font: inherit; }
   padding: 3px 6px !important;
 }
 
-/* Colors for Draw Columns */
+
 .matrix-table .draw-morning { background: #f8fafc; }
 .matrix-table th.draw-morning { background: #eaf2ff; }
 .matrix-table tbody tr:hover .draw-morning { background: #e0ecfd; }
@@ -233,7 +231,7 @@ button { font: inherit; }
   color: #0f172a;
 }
 
-/* Commission Column */
+
 .matrix-table .draw-commission {
   background: #fdf4ff;
   color: #86198f;
@@ -250,7 +248,7 @@ button { font: inherit; }
   font-size: 8px;
 }
 
-/* Net Sales Column */
+
 .matrix-table .draw-net-sales {
   background: #fff7ed;
   color: #9a3412;
@@ -279,7 +277,7 @@ button { font: inherit; }
   color: #7c2d12;
 }
 
-/* Separator Column */
+
 .matrix-table th.draw-separator-col,
 .matrix-table td.draw-separator-cell {
   width: 10px !important;
@@ -292,7 +290,7 @@ button { font: inherit; }
   pointer-events: none;
 }
 
-/* Overall Section Columns */
+
 .matrix-table .draw-overall {
   background: #f8fafc;
   padding: 3px 6px !important;
@@ -307,12 +305,12 @@ button { font: inherit; }
   font-weight: 800 !important;
 }
 
-/* Row Heights */
+
 .matrix-table tbody tr {
   height: 27px;
 }
 
-/* Negative values (Bold Red) */
+
 .matrix-table .negative-value {
   color: #dc2626 !important;
   font-weight: 800;
@@ -326,7 +324,7 @@ button { font: inherit; }
   height: 29px;
 }
 
-/* Supervisor Filter Controls */
+
 .supervisor-panel-heading {
   display: flex;
   justify-content: space-between;
@@ -458,7 +456,7 @@ button { font: inherit; }
   }
 }
 
-/* Overall Columns Toggle Switch (Matching User Design) */
+
 .overall-toggle-container {
   display: inline-flex;
   align-items: center;
@@ -535,7 +533,7 @@ button { font: inherit; }
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18), 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
-/* Checked state - authentic Apple iOS Green #34C759 */
+
 .toggle-switch-ui input.toggle-checkbox:checked + .toggle-track-slider {
   background-color: #34C759;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
@@ -550,9 +548,7 @@ button { font: inherit; }
   outline-offset: 2px;
 }
 
-/* ==========================================================================
-   VIEW MODE TOGGLE & STATEMENT BUTTONS
-   ========================================================================== */
+
 
 .view-mode-toggle-wrap {
   display: inline-flex;
@@ -615,7 +611,7 @@ button { font: inherit; }
   transform: translateY(-1px);
 }
 
-/* Supervisor Heading */
+
 .supervisor-heading {
   display: flex;
   align-items: center;
@@ -663,9 +659,7 @@ button { font: inherit; }
   color: var(--blue);
 }
 
-/* ==========================================================================
-   BALANCE SHEET REMITTANCE STATEMENT (PICTURE 1 FINANCIAL FORMAT)
-   ========================================================================== */
+
 
 .statement-sheet {
   background: #ffffff;
@@ -685,7 +679,7 @@ button { font: inherit; }
   margin: 0 auto;
 }
 
-/* Document Header (Picture 1 style) */
+
 .statement-header-block {
   text-align: center;
   margin-bottom: 22px;
@@ -792,7 +786,7 @@ button { font: inherit; }
   color: #cbd5e1;
 }
 
-/* Table Container & Table */
+
 .statement-table-container {
   width: 100%;
   overflow-x: hidden;
@@ -834,7 +828,7 @@ button { font: inherit; }
   color: #0f172a;
 }
 
-/* Section Header Rows */
+
 .statement-section-divider-row {
   background: #f1f5f9;
 }
@@ -856,7 +850,7 @@ button { font: inherit; }
   border-bottom: 1px solid #fecdd3;
 }
 
-/* Data Rows */
+
 .statement-data-row {
   transition: background .12s ease;
 }
@@ -916,7 +910,7 @@ button { font: inherit; }
   font-weight: 600;
 }
 
-/* Empty State */
+
 .statement-empty-state-cell {
   padding: 4px 8px;
   text-align: left;
@@ -932,7 +926,7 @@ button { font: inherit; }
   background: #f0fdf4;
 }
 
-/* Subtotal Rows (Picture 1 style: line above numbers only) */
+
 .statement-subtotal-data-row {
   background: #ffffff;
 }
@@ -957,7 +951,7 @@ button { font: inherit; }
   text-align: right;
   font-family: 'Manrope', sans-serif;
   font-variant-numeric: tabular-nums;
-  border-top: 1.5px solid #0f172a; /* Single underline above subtotal numbers */
+  border-top: 1.5px solid #0f172a; 
   color: #0f172a;
 }
 
@@ -965,7 +959,7 @@ button { font: inherit; }
   border-top: 1.5px solid #dc2626 !important;
 }
 
-/* Spacing Gap Row */
+
 .statement-spacer-divider-row td {
   padding: 2px 0;
   border: none;
@@ -973,7 +967,7 @@ button { font: inherit; }
   height: 2px;
 }
 
-/* Grand Total Row (Classic GAAP Accounting Double Underline) */
+
 .statement-grand-total-row {
   background: #ffffff;
 }
@@ -994,11 +988,11 @@ button { font: inherit; }
   font-variant-numeric: tabular-nums;
   font-size: 11.5px;
   border-top: 1.5px solid #0f172a;
-  border-bottom: 3.5px double #0f172a; /* GAAP DOUBLE UNDERLINE */
+  border-bottom: 3.5px double #0f172a; 
   color: #0f172a;
 }
 
-/* Bottom Reconciliation Schedule */
+
 .statement-bottom-reconciliation {
   margin: 18px 0 28px;
   display: flex;
@@ -1063,7 +1057,7 @@ button { font: inherit; }
 
 .rec-final-total-row td {
   border-top: 1.5px solid #0f172a;
-  border-bottom: 3px double #0f172a; /* DOUBLE UNDERLINE */
+  border-bottom: 3px double #0f172a; 
   padding: 10px 14px;
 }
 
@@ -1078,7 +1072,7 @@ button { font: inherit; }
   color: #0f172a;
 }
 
-/* Formal Signatures Strip (Supervisor & Cashier/Receiver) */
+
 .statement-signatures-section {
   display: flex;
   justify-content: space-between;
@@ -1134,9 +1128,7 @@ button { font: inherit; }
   line-height: 1.2;
 }
 
-/* ==========================================================================
-   STATEMENT MODAL BACKDROP & CONTROLS
-   ========================================================================== */
+
 
 .statement-modal-backdrop {
   position: fixed;
@@ -1218,7 +1210,7 @@ button { font: inherit; }
   cursor: pointer;
 }
 
-/* Statement Mode Pills & Draw Selectors */
+
 .statement-mode-pills {
   display: inline-flex;
   background: #e2e8f0;
@@ -1380,7 +1372,7 @@ button { font: inherit; }
   letter-spacing: 0.2px;
 }
 
-/* Mini iOS Toggle Switch for Toolbars */
+
 .ios-toggle-mini {
   position: relative;
   display: inline-block;
@@ -1455,7 +1447,7 @@ button { font: inherit; }
   letter-spacing: 0.5px;
 }
 
-/* Font Size & Layout Stepper Bar */
+
 .statement-scale-stepper-wrap {
   display: inline-flex;
   align-items: center;
@@ -1522,7 +1514,7 @@ button { font: inherit; }
   text-align-last: center;
 }
 
-/* Modal Print Preview Header Bar */
+
 .statement-preview-header-tag {
   max-width: 880px;
   margin: 0 auto 10px;
@@ -1600,7 +1592,7 @@ button { font: inherit; }
   box-shadow: 0 1px 3px rgba(180, 83, 9, 0.15);
 }
 
-/* 1-Page A4 Screen Optimization & Layout */
+
 .statement-sheet {
   --statement-scale: 1;
   transform-origin: top center;
@@ -1622,7 +1614,7 @@ button { font: inherit; }
   width: 100%;
 }
 
-/* ── 2-COLUMN BODY LAYOUT ──────────────────────────────────────────────── */
+
 .statement-two-col-body {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
@@ -1697,7 +1689,7 @@ button { font: inherit; }
   box-sizing: border-box;
 }
 
-/* Column section title label */
+
 .statement-col-label {
   font: 700 8px 'Manrope', sans-serif;
   letter-spacing: 0.6px;
@@ -1746,7 +1738,7 @@ button { font: inherit; }
   padding-top: 6px;
 }
 
-/* Density Tiers - Gentle, proportional adjustments */
+
 .statement-sheet.density-compact .statement-td {
   padding: 1.5px 5px !important;
   font-size: 10.5px !important;
@@ -1784,9 +1776,7 @@ button { font: inherit; }
   background: #f1f5f9;
 }
 
-/* ==========================================================================
-   MODERN EXECUTIVE OVERVIEW DASHBOARD & ANALYTICS
-   ========================================================================== */
+
 
 .overview-dashboard-wrap {
   display: flex;
@@ -1795,7 +1785,7 @@ button { font: inherit; }
   margin-bottom: 24px;
 }
 
-/* Executive Banner */
+
 .overview-hero-banner {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f2b48 100%);
   border-radius: 12px;
@@ -1858,7 +1848,7 @@ button { font: inherit; }
   box-shadow: 0 0 8px #10b981;
 }
 
-/* 5-Card Executive KPI Grid */
+
 .overview-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1957,7 +1947,7 @@ button { font: inherit; }
 .pill-amber { background: #fef3c7; color: #b45309; }
 .pill-blue { background: #dbeafe; color: #1d4ed8; }
 
-/* Draws Results & Winning Strip */
+
 .overview-draws-section {
   background: #ffffff;
   border-radius: 10px;
@@ -2037,7 +2027,7 @@ button { font: inherit; }
 .type-local { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 .type-pcso { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
 
-/* 3D Lottery Ball Badges */
+
 .lotto-balls-row {
   display: flex;
   align-items: center;
@@ -2093,7 +2083,7 @@ button { font: inherit; }
 .draw-metric-line .val-hits { color: #dc2626; }
 .draw-metric-line .val-kabig { color: #16a34a; }
 
-/* Draw Mini Progress Bar */
+
 .draw-ratio-bar-wrap {
   height: 4px;
   background: #e2e8f0;
@@ -2112,7 +2102,7 @@ button { font: inherit; }
   background: #ef4444;
 }
 
-/* Modern Tables Section */
+
 .overview-table-card {
   background: #ffffff;
   border-radius: 10px;
@@ -2172,7 +2162,7 @@ button { font: inherit; }
   width: 160px;
 }
 
-/* Modern Draw Table Styling */
+
 .modern-draw-table,
 .modern-spvr-table {
   width: 100%;
@@ -2265,7 +2255,7 @@ button { font: inherit; }
   padding: 12px 14px !important;
 }
 
-/* Supervisor Leaderboard Styling */
+
 .spvr-rank-badge {
   display: inline-flex;
   align-items: center;
@@ -2330,7 +2320,7 @@ button { font: inherit; }
   border-color: #2563eb;
 }
 
-/* Analytics Split Grid */
+
 .overview-analytics-split {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -2359,7 +2349,7 @@ button { font: inherit; }
   color: #0f172a;
 }
 
-/* Revenue Distribution Multi-Bar */
+
 .revenue-share-multi-bar {
   display: flex;
   height: 16px;
@@ -2421,7 +2411,7 @@ button { font: inherit; }
   color: #0f172a;
 }
 
-/* Deficit Watchlist Mini List */
+
 .deficit-watchlist-list {
   display: flex;
   flex-direction: column;
@@ -2455,7 +2445,7 @@ button { font: inherit; }
   color: #dc2626;
 }
 
-/* Raw Feed Accordion */
+
 .raw-feed-accordion {
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
@@ -2483,7 +2473,7 @@ button { font: inherit; }
 
 
 
-/* User Profile & Logout in Topbar & Sidebar */
+
 .user-profile-widget {
   display: flex;
   align-items: center;
@@ -2528,9 +2518,7 @@ button { font: inherit; }
   color: #dc2626;
 }
 
-/* ==========================================================================
-   PRINT MEDIA RULES (PERFECT SINGLE A4 BOND PAPER OUTPUT)
-   ========================================================================== */
+
 
 @page {
   size: A4 portrait;
@@ -2539,9 +2527,7 @@ button { font: inherit; }
 
 @media print {
 
-  /* ══════════════════════════════════════════════════════════════════
-     1. HIDE ALL UI CHROME — Only the statement sheet gets printed
-     ══════════════════════════════════════════════════════════════════ */
+  
   .no-print,
   .statement-preview-header-tag,
   .statement-scale-stepper-wrap,
@@ -2558,9 +2544,7 @@ button { font: inherit; }
     display: none !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     2. PAGE / DOCUMENT RESET
-     ══════════════════════════════════════════════════════════════════ */
+  
   @page {
     size: A4 portrait;
     margin: 4mm 5mm;
@@ -2576,9 +2560,7 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     3. MODAL WRAPPERS — Flatten for print
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-modal-backdrop,
   .statement-modal-shell,
   .statement-modal-content-area,
@@ -2598,7 +2580,7 @@ button { font: inherit; }
     max-width: 100% !important;
   }
 
-  /* Outer auto-fit wrapper — release clip */
+  
   .statement-modal-backdrop > div:first-child,
   .statement-a4-page-frame > div:first-child {
     overflow: visible !important;
@@ -2606,14 +2588,9 @@ button { font: inherit; }
     width: 100% !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     4. STATEMENT SHEET — Adaptive single-page container
-        Uses CSS variables via clamp() to auto-scale proportionally.
-        The sheet fills exactly 1 Long Bond Paper:
-          printable height = 13in - 10mm margins ≈ 12.6in
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-sheet {
-    /* Kill JS-applied transform — CSS handles sizing now */
+    
     transform: none !important;
     zoom: 1 !important;
 
@@ -2621,12 +2598,12 @@ button { font: inherit; }
     width: 100% !important;
     max-width: 100% !important;
 
-    /* Auto-height: let content flow, page handles the cut-off */
+    
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
 
-    /* Prevent splitting across pages */
+    
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-before: avoid !important;
@@ -2643,13 +2620,11 @@ button { font: inherit; }
     padding: 0 !important;
     margin: 0 !important;
 
-    /* Adaptive font scale — base is 9pt, auto-clamps between 7pt and 9pt */
+    
     font-size: 9pt !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     5. HEADER BLOCK — Compact, full-width
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-header-block {
     text-align: center !important;
     margin: 0 0 3pt 0 !important;
@@ -2705,11 +2680,7 @@ button { font: inherit; }
   .statement-meta-pill strong { color: #0f172a !important; }
   .statement-meta-divider { color: #cbd5e1 !important; }
 
-  /* ══════════════════════════════════════════════════════════════════
-     6. 2-COLUMN BODY — Responsive grid that adapts to print width.
-        Left: balance table (57%), Right: draw deficits (43%)
-        Separated by a vertical rule for clean print layout.
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-two-col-body {
     display: grid !important;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) !important;
@@ -2757,9 +2728,7 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     7. BALANCE TABLE — Auto-fits inside left column (57% width)
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-table-container {
     overflow: visible !important;
     margin-bottom: 0 !important;
@@ -2769,9 +2738,9 @@ button { font: inherit; }
 
   .statement-balance-table {
     width: 100% !important;
-    min-width: 0 !important;     /* Crucial: allows shrinking in 57% column */
+    min-width: 0 !important;     
     border-collapse: collapse !important;
-    font-size: 7.8pt !important; /* Adaptive: fits 6 columns in narrow width */
+    font-size: 7.8pt !important; 
     table-layout: fixed !important;
   }
 
@@ -2793,7 +2762,7 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  /* Responsive column widths inside narrow 57% left column */
+  
   .statement-th-agent { width: 28% !important; text-align: left !important; }
   .statement-th-num   { width: 14.4% !important; text-align: right !important; }
 
@@ -2824,7 +2793,7 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  /* Each data row — compact and readable at 7.8pt */
+  
   .statement-td {
     padding: 1pt 2pt !important;
     font-size: 7.8pt !important;
@@ -2931,9 +2900,7 @@ button { font: inherit; }
     border-bottom: 3pt double #0f172a !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     8. DRAW DEFICITS (RIGHT COLUMN) — inherits compact print styles
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-embedded-draw-deficits {
     margin: 0 !important;
     width: 100% !important;
@@ -2980,9 +2947,7 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     9. SIGNATURES + FOOTER — Pinned at the bottom
-     ══════════════════════════════════════════════════════════════════ */
+  
   .statement-signatures-section {
     display: flex !important;
     justify-content: space-between !important;
@@ -3048,11 +3013,9 @@ button { font: inherit; }
   }
 }
 
-/* ==========================================================================
-   ROLE-BASED ACCESS CONTROL (RBAC) & PERMISSIONS ENFORCEMENT STYLES
-   ========================================================================== */
 
-/* Access Restricted Notice Container */
+
+
 .access-restricted-container {
   display: flex;
   justify-content: center;
@@ -3251,7 +3214,7 @@ button { font: inherit; }
   background: #0369a1;
 }
 
-/* Sidebar Nav Lock Badges */
+
 .nav-lock-badge {
   display: inline-flex;
   align-items: center;
@@ -3268,7 +3231,7 @@ button { font: inherit; }
   opacity: 0.72;
 }
 
-/* Export CSV Button */
+
 .export-data-btn {
   display: inline-flex;
   align-items: center;
@@ -3289,14 +3252,14 @@ button { font: inherit; }
   border-color: #86efac;
 }
 
-/* Generic Locked Permission Button State */
+
 .is-perm-locked {
   opacity: 0.55 !important;
   cursor: not-allowed !important;
   filter: grayscale(0.4);
 }
 
-/* Topbar Account Switcher & Capabilities Badge */
+
 .topbar-quick-switcher {
   display: flex;
   align-items: center;
@@ -3364,9 +3327,7 @@ button { font: inherit; }
   color: #991b1b;
 }
 
-/* ==========================================================================
-   GLOBAL DARK MODE THEME SYSTEM (Rich Apple/Facebook Dark Theme)
-   ========================================================================== */
+
 html[data-theme="dark"],
 body[data-theme="dark"] {
   background: #18191a;
@@ -3511,7 +3472,7 @@ body[data-theme="dark"] {
   color: #60a5fa;
 }
 
-/* Tables in Dark Mode */
+
 [data-theme="dark"] th {
   background: #18191a;
   color: #b0b3b8;
@@ -3604,7 +3565,7 @@ body[data-theme="dark"] {
   color: #e4e6eb;
 }
 
-/* Modals in Dark Mode */
+
 [data-theme="dark"] .statement-modal-shell {
   background: #18191a;
   border-color: #3a3b3c;
@@ -3710,9 +3671,7 @@ body[data-theme="dark"] {
   background: #020617;
 }
 
-/* ==========================================================================
-   DEFICIT & NEGATIVE INSPECTOR TRIGGER BUTTONS
-   ========================================================================== */
+
 
 .deficit-topbar-trigger-btn {
   display: inline-flex;
@@ -3802,7 +3761,7 @@ body[data-theme="dark"] {
   color: #991b1b;
 }
 
-/* Dark mode overrides for Deficit trigger buttons */
+
 [data-theme="dark"] .deficit-topbar-trigger-btn {
   background: rgba(220, 38, 38, 0.15);
   border-color: rgba(220, 38, 38, 0.35);
@@ -3848,9 +3807,7 @@ body[data-theme="dark"] {
   color: #ffffff;
 }
 
-/* ==========================================================================
-   AUTO-SHRINK FONT FALLBACK UTILITIES FOR FIGURES
-   ========================================================================== */
+
 .auto-shrink-container {
   display: block;
   width: 100%;

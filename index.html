@@ -1,15 +1,69 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/glowing-fortune-logo.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <title>Glowing Fortune | STL Reports</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/glowing-fortune-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <title>Glowing Fortune | STL Reports</title>
+  <script>
+    (function () {
+      document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        return false;
+      }, true);
+
+      document.addEventListener('keydown', function (e) {
+        var key = e.key ? e.key.toLowerCase() : '';
+        var isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        var isShiftOrAlt = e.shiftKey || e.altKey;
+
+        if (
+          key === 'f12' ||
+          (isCtrlOrCmd && isShiftOrAlt && (key === 'i' || key === 'j' || key === 'c')) ||
+          (isCtrlOrCmd && key === 'u')
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+
+      function checkDevTools() {
+        var widthDiff = (window.outerWidth - window.innerWidth) > 160;
+        var heightDiff = (window.outerHeight - window.innerHeight) > 160;
+        var isOpen = widthDiff || heightDiff;
+        var overlay = document.getElementById('devtools-lockout');
+
+        if (isOpen) {
+          if (overlay) overlay.style.display = 'flex';
+        } else {
+          if (overlay) overlay.style.display = 'none';
+        }
+      }
+
+      window.addEventListener('resize', checkDevTools);
+      setInterval(checkDevTools, 500);
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="devtools-lockout" style="display:none; position:fixed; inset:0; z-index:99999999; background:#0b1324; color:#ffffff; flex-direction:column; align-items:center; justify-content:center; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; text-align:center; padding:24px;">
+    <div style="width:68px; height:68px; border-radius:50%; background:rgba(220,38,38,0.15); border:2px solid #ef4444; display:flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:18px;">
+      🛡️
+    </div>
+    <h2 style="margin:0 0 10px; font-size:22px; font-weight:800; letter-spacing:-0.5px;">Security Restriction Active</h2>
+    <p style="margin:0; color:#94a3b8; font-size:14px; line-height:1.6; max-width:440px;">
+      Developer inspection tools are strictly restricted on this workstation terminal. Please <strong>close Developer Tools</strong> to resume access.
+    </p>
+  </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

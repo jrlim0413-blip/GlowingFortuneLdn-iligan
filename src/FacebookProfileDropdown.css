@@ -1,11 +1,11 @@
-/* src/FacebookProfileDropdown.css - Facebook-Style Profile Dropdown & Dark Mode Styling */
+
 
 .fb-profile-container {
   position: relative;
   display: inline-block;
 }
 
-/* Topbar Trigger Button */
+
 .fb-trigger-btn {
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@
   transform: rotate(180deg);
 }
 
-/* Floating Popover Card (Facebook Style) */
+
 .fb-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -128,7 +128,7 @@
   }
 }
 
-/* Header Active Profile Card */
+
 .fb-active-profile-card {
   background: #ffffff;
   border-radius: 12px;
@@ -223,7 +223,7 @@
   color: #92400e;
 }
 
-/* Account Switcher Section (Facebook style) */
+
 .fb-account-switcher-section {
   display: flex;
   flex-direction: column;
@@ -337,7 +337,7 @@
   margin: 4px 0;
 }
 
-/* Menu Items List */
+
 .fb-menu-items-list {
   display: flex;
   flex-direction: column;
@@ -369,7 +369,7 @@
   gap: 12px;
 }
 
-/* Facebook-Style Circular Icon Button on the Left */
+
 .fb-icon-circle {
   width: 36px;
   height: 36px;
@@ -436,9 +436,7 @@
   color: #94a3b8;
 }
 
-/* ==========================================================================
-   DARK MODE ADAPTATION (Rich Facebook/Apple Dark Theme)
-   ========================================================================== */
+
 [data-theme="dark"] .fb-trigger-btn {
   background: #242526;
   border-color: #3a3b3c;
