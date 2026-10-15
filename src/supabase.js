@@ -4,16 +4,21 @@ import { setInMemoryCommissionSettings } from './commissions.js'
 
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
 
-const supabaseUrl = (env.VITE_SUPABASE_URL || '').trim()
-const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY || '').trim()
+const DEFAULT_SUPABASE_URL = 'https://snemagtefsfuagzdhzmq.supabase.co'
+const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuZW1hZ3RlZnNmdWFnemRoem1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MDg4NjgsImV4cCI6MjEwNzM4NDg2OH0.Pym6MwNdX9vMDk-zbOGqCqfCjYUZqxMl9kpkwQfTo_A'
+
+let rawUrl = (env.VITE_SUPABASE_URL || '').trim()
+let rawKey = (env.VITE_SUPABASE_ANON_KEY || '').trim()
+
+if (!rawUrl || rawUrl.includes('ejtsskrbkaqfdcouwvzh') || !rawKey || rawKey.includes('whKp_OjW')) {
+  rawUrl = DEFAULT_SUPABASE_URL
+  rawKey = DEFAULT_SUPABASE_KEY
+}
+
+const supabaseUrl = rawUrl
+const supabaseAnonKey = rawKey
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
-
-if (!isSupabaseConfigured && typeof console !== 'undefined' && env.DEV) {
-  console.warn(
-    '[Supabase] VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY are not configured. Supabase cloud sync features are disabled.'
-  )
-}
 
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
