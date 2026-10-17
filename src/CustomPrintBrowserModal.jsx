@@ -189,7 +189,6 @@ export function CustomPrintBrowserModal({
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        windowWidth: 1280,
         logging: false,
         onclone: (clonedDoc) => {
           clonedDoc.documentElement.setAttribute('data-theme', 'light')
@@ -199,116 +198,12 @@ export function CustomPrintBrowserModal({
           if (viewportTransform) {
             viewportTransform.style.transform = 'none'
           }
+
           const clonedSheet = clonedDoc.querySelector('.visual-paper-sheet')
           if (clonedSheet) {
             clonedSheet.style.boxShadow = 'none'
             clonedSheet.style.margin = '0'
-            clonedSheet.style.borderRadius = '0'
-            clonedSheet.style.height = 'auto'
-            clonedSheet.style.minHeight = 'auto'
           }
-
-          const sheets = clonedDoc.querySelectorAll('.statement-sheet')
-          sheets.forEach((s) => {
-            s.style.transform = 'none'
-            s.style.width = '100%'
-            s.style.maxWidth = '100%'
-            s.style.height = 'auto'
-            s.style.minHeight = 'auto'
-          })
-
-          const hiddenWrappers = clonedDoc.querySelectorAll('[style*="overflow: hidden"], [style*="overflow-x: hidden"], .paper-printable-content-area, .paper-viewport-transform')
-          hiddenWrappers.forEach((w) => {
-            w.style.overflow = 'visible'
-            w.style.height = 'auto'
-          })
-
-          const styleTag = clonedDoc.createElement('style')
-          styleTag.textContent = `
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              box-sizing: border-box !important;
-            }
-            .visual-paper-sheet {
-              background: #ffffff !important;
-              color: #0f172a !important;
-            }
-            .statement-meta-row {
-              background: #f8fafc !important;
-              border-color: #cbd5e1 !important;
-              color: #0f172a !important;
-            }
-            .statement-meta-pill {
-              background: #f1f5f9 !important;
-              border: 1px solid #cbd5e1 !important;
-              color: #0f172a !important;
-            }
-            .statement-meta-pill strong,
-            .statement-meta-pill span {
-              color: #0f172a !important;
-            }
-            .statement-meta-divider {
-              color: #94a3b8 !important;
-            }
-            .statement-company-title, .statement-report-title {
-              color: #0f172a !important;
-            }
-            .statement-report-subtitle {
-              color: #475569 !important;
-            }
-            .statement-th {
-              color: #334155 !important;
-              background: #f8fafc !important;
-              border-bottom: 2px solid #0f172a !important;
-            }
-            .statement-td {
-              color: #1e293b !important;
-              border-bottom: 1px solid #e2e8f0 !important;
-            }
-            .statement-agent-name {
-              color: #0f172a !important;
-              font-weight: 600 !important;
-            }
-            .statement-section-heading-cell {
-              background: #f1f5f9 !important;
-              color: #0f172a !important;
-              border-color: #cbd5e1 !important;
-            }
-            .statement-negative-heading-cell {
-              background: #fff1f2 !important;
-              color: #991b1b !important;
-              border-color: #fecdd3 !important;
-            }
-            .statement-subtotal-indent, .statement-subtotal-num-td, .statement-grand-label-td, .statement-grand-num-td, .statement-remit-td {
-              color: #0f172a !important;
-            }
-            .accounting-deficit-text, .statement-neg-label-indent {
-              color: #dc2626 !important;
-            }
-            .accounting-currency-symbol {
-              color: #64748b !important;
-            }
-            .modern-draw-card {
-              border-color: #e2e8f0 !important;
-              background: #ffffff !important;
-            }
-            .modern-teller-main {
-              color: #0f172a !important;
-            }
-            .modern-amount-text {
-              color: #b91c1c !important;
-              background: #fee2e2 !important;
-              border-color: #fca5a5 !important;
-            }
-            .modern-draw-total-amt {
-              color: #b91c1c !important;
-            }
-            .statement-sig-title, .statement-sig-name {
-              color: #0f172a !important;
-            }
-          `
-          clonedDoc.head.appendChild(styleTag)
         },
       })
 
@@ -365,6 +260,9 @@ export function CustomPrintBrowserModal({
       size: ${currentPaper.id === 'custom' ? `${currentPaper.widthMm}mm ${currentPaper.heightMm}mm` : `${currentPaper.name.split(' ')[0]} ${settings.orientation}`} !important;
       margin: ${currentMargin.top} ${currentMargin.right} ${currentMargin.bottom} ${currentMargin.left} !important;
     }
+    ${!settings.showHeader ? '.visual-paper-sheet .statement-header-block, .statement-header-block { display: none !important; }' : ''}
+    ${!settings.showSignatures ? '.visual-paper-sheet .statement-signatures-section, .statement-signatures-section { display: none !important; }' : ''}
+    ${!settings.showFooterTag ? '.visual-paper-sheet .statement-print-footer-tag, .statement-print-footer-tag { display: none !important; }' : ''}
     @media print {
       body {
         -webkit-print-color-adjust: exact !important;
@@ -374,9 +272,6 @@ export function CustomPrintBrowserModal({
       .statement-sheet {
         zoom: ${activeScale / 100} !important;
       }
-      ${!settings.showHeader ? '.statement-modal-controls-bar, .statement-header-branding { display: none !important; }' : ''}
-      ${!settings.showSignatures ? '.statement-signatures-section { display: none !important; }' : ''}
-      ${!settings.showFooterTag ? '.statement-print-footer-tag { display: none !important; }' : ''}
     }
   `
 

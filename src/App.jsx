@@ -774,16 +774,19 @@ function SupervisorStatementTable({
   }, [fitOnePage, group?.agents?.length, group?.supervisor])
 
   useLayoutEffect(() => {
-    if (!fitOnePage || !sheetRef.current) return
+    if (!fitOnePage || !sheetRef.current || !wrapRef.current) return
     if (computedScale < 100) {
       const s = (computedScale / 100).toFixed(4)
       sheetRef.current.style.transformOrigin = 'top left'
       sheetRef.current.style.transform = `scale(${s})`
       sheetRef.current.style.width = `${(100 / (computedScale / 100)).toFixed(2)}%`
+      const scaledH = Math.ceil(sheetRef.current.scrollHeight * (computedScale / 100))
+      wrapRef.current.style.height = `${scaledH}px`
     } else {
       sheetRef.current.style.transform = ''
       sheetRef.current.style.transformOrigin = ''
       sheetRef.current.style.width = ''
+      wrapRef.current.style.height = ''
     }
   }, [computedScale, fitOnePage])
 
