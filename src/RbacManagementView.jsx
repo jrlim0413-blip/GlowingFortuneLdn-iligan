@@ -870,21 +870,19 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
 
         <div className="rbac-header-actions">
           {isSupabaseConfigured && (
-            <button
-              type="button"
-              className={`rbac-supabase-sync-btn status-${supabaseSyncStatus}`}
-              onClick={() => setShowSqlModal(true)}
-              title="View cloud database configuration & SQL schema"
+            <div
+              className={`rbac-supabase-sync-btn rbac-supabase-sync-indicator status-${supabaseSyncStatus}`}
+              title={supabaseSyncStatus === 'connected' ? 'Cloud Directory: Live (Connected)' : 'Cloud Directory Status'}
             >
               <span className={`sync-status-dot status-${supabaseSyncStatus}`} />
               <span>
                 {supabaseSyncStatus === 'connected'
                   ? 'Cloud Directory: Live'
                   : supabaseSyncStatus === 'table_missing'
-                  ? 'Setup Cloud Directory (SQL)'
+                  ? 'Cloud Directory: Offline'
                   : 'Cloud Syncing...'}
               </span>
-            </button>
+            </div>
           )}
 
           <button
@@ -2002,57 +2000,7 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
 
       {}
       {}
-      {}
-      {showSqlModal && (
-        <div className="rbac-modal-backdrop" onClick={() => setShowSqlModal(false)}>
-          <div className="rbac-modal-window modal-sql-setup" onClick={(e) => e.stopPropagation()}>
-            <div className="rbac-modal-header">
-              <div className="rbac-modal-icon-badge info">
-                <SvgIcon name="shieldCheck" size={18} />
-              </div>
-              <div>
-                <h3>Cloud Directory Table Setup</h3>
-                <p>Run this SQL script in your database console to activate dedicated cloud logins</p>
-              </div>
-            </div>
 
-            <div className="rbac-sql-modal-body">
-              <div className="sql-instruction-step">
-                <strong>How to setup in 1 minute:</strong>
-                <ol>
-                  <li>Open your <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">Supabase Dashboard</a> and go to the <strong>SQL Editor</strong>.</li>
-                  <li>Click <strong>New Query</strong>, paste the script below, and click <strong>Run</strong>.</li>
-                  <li>Once created, this workstation will automatically authenticate accounts directly from your cloud directory!</li>
-                </ol>
-              </div>
-              <div className="sql-code-box">
-                <pre>{SQL_SCRIPT_TEXT}</pre>
-              </div>
-            </div>
-
-            <div className="rbac-modal-footer">
-              <button
-                type="button"
-                className="rbac-secondary-btn"
-                onClick={() => setShowSqlModal(false)}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="rbac-primary-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(SQL_SCRIPT_TEXT)
-                  showNotification('SQL Script copied to clipboard!')
-                }}
-              >
-                <SvgIcon name="check" size={14} />
-                Copy SQL Script
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {}
       <ConfirmActionModal

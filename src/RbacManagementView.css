@@ -1305,7 +1305,13 @@
   font-family: inherit;
 }
 
-.rbac-supabase-sync-btn:hover {
+.rbac-supabase-sync-btn.rbac-supabase-sync-indicator {
+  cursor: default !important;
+  pointer-events: none !important;
+  user-select: none;
+}
+
+.rbac-supabase-sync-btn:not(.rbac-supabase-sync-indicator):hover {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
