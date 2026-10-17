@@ -137,20 +137,10 @@ export const PERMISSION_GROUPS = [
 ]
 
 export const DEFAULT_ROLES = {
-  admin: {
-    id: 'admin',
-    label: 'System Administrator',
-    badge: 'SUPERADMIN',
-    color: '#ef4444',
-    bg: 'rgba(239, 68, 68, 0.12)',
-    border: 'rgba(239, 68, 68, 0.35)',
-    description: 'Unrestricted master access to all workspaces, credential management, and audit logs.',
-    permissions: PERMISSIONS.map((p) => p.key),
-  },
   accountant: {
     id: 'accountant',
-    label: 'Head Cashier / Accountant',
-    badge: 'ACCOUNTING',
+    label: 'Cashier',
+    badge: 'CASHIER',
     color: '#06b6d4',
     bg: 'rgba(6, 182, 212, 0.12)',
     border: 'rgba(6, 182, 212, 0.35)',
@@ -185,24 +175,6 @@ export const DEFAULT_ROLES = {
       'change_theme',
     ],
   },
-  auditor: {
-    id: 'auditor',
-    label: 'Internal Compliance Auditor',
-    badge: 'AUDITOR',
-    color: '#f59e0b',
-    bg: 'rgba(245, 158, 11, 0.12)',
-    border: 'rgba(245, 158, 11, 0.35)',
-    description: 'Compliance auditor with read access to reports, turnover audit trails, and security logs.',
-    permissions: [
-      'view_overview',
-      'view_reports',
-      'audit_logs',
-      'export_data',
-      'inspect_deficits',
-      'view_all_draws',
-      'change_theme',
-    ],
-  },
   staff: {
     id: 'staff',
     label: 'Terminal Staff',
@@ -212,6 +184,16 @@ export const DEFAULT_ROLES = {
     border: 'rgba(16, 185, 129, 0.35)',
     description: 'Operational terminal assistant with access restricted to live overview metrics.',
     permissions: ['view_overview'],
+  },
+  admin: {
+    id: 'admin',
+    label: 'System Administrator',
+    badge: 'SUPERADMIN',
+    color: '#ef4444',
+    bg: 'rgba(239, 68, 68, 0.12)',
+    border: 'rgba(239, 68, 68, 0.35)',
+    description: 'Unrestricted master access to all workspaces, credential management, and audit logs.',
+    permissions: PERMISSIONS.map((p) => p.key),
   },
 }
 
@@ -236,7 +218,7 @@ export const DEFAULT_USERS = [
     password: 'luckybet2026',
     name: 'Elena Morales',
     role: 'accountant',
-    roleLabel: 'Head Cashier',
+    roleLabel: 'Cashier',
     branch: 'LDN Branch',
     status: 'active',
     lastLogin: 'Today, 09:15 AM',
@@ -309,7 +291,16 @@ let inMemoryAuditLogs = [...DEFAULT_AUDIT_LOGS]
 
 export function setInMemoryRoles(roles) {
   if (roles && typeof roles === 'object') {
-    inMemoryRoles = roles
+    const cleaned = { ...roles }
+    delete cleaned.auditor
+    if (cleaned.accountant) {
+      cleaned.accountant = {
+        ...cleaned.accountant,
+        label: 'Cashier',
+        badge: 'CASHIER',
+      }
+    }
+    inMemoryRoles = cleaned
   }
 }
 
@@ -321,11 +312,30 @@ export function setInMemoryUserPerms(perms) {
 
 export function setInMemoryUsers(users) {
   if (Array.isArray(users)) {
-    inMemoryUsers = users
+    inMemoryUsers = users.map((u) => {
+      if (u.role === 'accountant' && (!u.roleLabel || u.roleLabel.includes('Head Cashier'))) {
+        return { ...u, roleLabel: 'Cashier' }
+      }
+      return u
+    })
   }
 }
 
 export function getRbacRoles() {
+  if (inMemoryRoles && typeof inMemoryRoles === 'object') {
+    if (inMemoryRoles.auditor || (inMemoryRoles.accountant && inMemoryRoles.accountant.label !== 'Cashier')) {
+      const cleaned = { ...inMemoryRoles }
+      delete cleaned.auditor
+      if (cleaned.accountant) {
+        cleaned.accountant = {
+          ...cleaned.accountant,
+          label: 'Cashier',
+          badge: 'CASHIER',
+        }
+      }
+      inMemoryRoles = cleaned
+    }
+  }
   return inMemoryRoles
 }
 
@@ -408,9 +418,13 @@ export function getRbacUsers() {
       const newBranch = sanitizeBranchString(u.branch)
       const newEmail = u.email ? u.email.replace(/luckybetplay\.ph/gi, 'glowingfortune.ph') : u.email
       const newUsername = u.username ? u.username.replace(/^mandaue\.staff$/i, 'ldn.staff').replace(/^teller\.mandaue$/i, 'teller.ldn') : u.username
+      const newRoleLabel = (u.role === 'accountant' && (!u.roleLabel || u.roleLabel.includes('Head Cashier')))
+        ? 'Cashier'
+        : (u.roleLabel === 'Head Cashier' ? 'Cashier' : u.roleLabel)
       return {
         ...u,
         username: newUsername,
+        roleLabel: newRoleLabel,
         branch: newBranch,
         email: newEmail,
       }

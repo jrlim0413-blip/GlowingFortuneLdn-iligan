@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { setInMemoryRoles, setInMemoryUserPerms, setInMemoryUsers } from './rbac.js'
+import { setInMemoryRoles, setInMemoryUserPerms, setInMemoryUsers, getRbacRoles } from './rbac.js'
 import { setInMemoryCommissionSettings } from './commissions.js'
 
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
@@ -285,7 +285,7 @@ export async function syncMatrixPermissionsFromSupabase() {
       if (changed && typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('luckybet_rbac_change', {
-            detail: { roles, userPerms, source: 'supabase_sync' },
+            detail: { roles: getRbacRoles(), userPerms, source: 'supabase_sync' },
           })
         )
       }
@@ -576,7 +576,7 @@ export async function getSupabaseRbacUsers() {
         password: row.password,
         name: row.name,
         role: row.role,
-        roleLabel: row.role_label,
+        roleLabel: (row.role === 'accountant' && (!row.role_label || row.role_label.includes('Head Cashier'))) ? 'Cashier' : (row.role_label === 'Head Cashier' ? 'Cashier' : row.role_label),
         branch: row.branch,
         status: row.status,
         avatar: row.avatar,

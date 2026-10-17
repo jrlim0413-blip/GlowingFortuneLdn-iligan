@@ -1026,8 +1026,8 @@ function SupervisorStatementTable({
         </div>
         <div className="statement-sig-column">
           <div className="statement-sig-line" />
-          <span className="statement-sig-title">HEAD CASHIER / RECEIVER</span>
-          <strong className="statement-sig-name">Authorized Head Cashier ({branchName})</strong>
+          <span className="statement-sig-title">CASHIER / RECEIVER</span>
+          <strong className="statement-sig-name">Authorized Cashier ({branchName})</strong>
           <span className="statement-sig-date">Date Received: _____________________</span>
         </div>
       </div>

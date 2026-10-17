@@ -77,7 +77,7 @@ WITH CHECK (true);
 INSERT INTO public.rbac_users (id, username, password, name, role, role_label, branch, status, avatar, email)
 VALUES
   ('usr_admin', 'admin', 'adminpassword', 'Jay Ryan Lim', 'admin', 'System Administrator', 'LDN HQ (All Zones)', 'active', 'JL', 'admin@glowingfortune.ph'),
-  ('usr_accountant', 'ldn.staff', 'luckybet2026', 'Elena Morales', 'accountant', 'Head Cashier', 'LDN Branch', 'active', 'EM', 'elena.m@glowingfortune.ph'),
+  ('usr_accountant', 'ldn.staff', 'luckybet2026', 'Elena Morales', 'accountant', 'Cashier', 'LDN Branch', 'active', 'EM', 'elena.m@glowingfortune.ph'),
   ('usr_supervisor', 'supervisor.carlos', 'luckybet2026', 'Carlos Tan', 'supervisor', 'Branch Supervisor', 'LDN Central Zone', 'active', 'CT', 'carlos.tan@glowingfortune.ph'),
   ('usr_terminal', 'teller.ldn', 'luckybet2026', 'Rico Dela Cruz', 'staff', 'Terminal Staff', 'LDN Terminal 01', 'active', 'RD', 'rico.staff@glowingfortune.ph')
 ON CONFLICT (username) DO UPDATE SET
@@ -288,9 +288,14 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
       .then((res) => {
         const deletedList = getDeletedUsernames()
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const validUsers = res.data.filter(
-            (u) => !deletedList.includes(u.username?.toLowerCase())
-          )
+          const validUsers = res.data
+            .filter((u) => !deletedList.includes(u.username?.toLowerCase()))
+            .map((u) => {
+              if (u.role === 'accountant' && (!u.roleLabel || u.roleLabel.includes('Head Cashier'))) {
+                return { ...u, roleLabel: 'Cashier' }
+              }
+              return u
+            })
           setUsers(validUsers)
           saveRbacUsers(validUsers)
           setSupabaseSyncStatus('connected')
@@ -1045,10 +1050,11 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
               <option value="all">All Roles ({users.length})</option>
               <option value="active_only">✅ Active Only</option>
               <option value="suspended_only">🚫 Deactivated Only</option>
-              <option value="admin">Administrators</option>
-              <option value="accountant">Head Cashiers</option>
-              <option value="supervisor">Branch Supervisors</option>
-              <option value="staff">Terminal Staff</option>
+              {Object.keys(roles).map((rKey) => (
+                <option key={rKey} value={rKey}>
+                  {roles[rKey]?.label || rKey}
+                </option>
+              ))}
             </select>
           </div>
         )}
@@ -1780,10 +1786,11 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   >
-                    <option value="accountant">Head Cashier</option>
-                    <option value="supervisor">Branch Supervisor</option>
-                    <option value="staff">Terminal Staff</option>
-                    <option value="admin">System Administrator</option>
+                    {Object.keys(roles).map((rKey) => (
+                      <option key={rKey} value={rKey}>
+                        {roles[rKey]?.label || rKey}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1896,10 +1903,11 @@ export default function RbacManagementView({ currentUser, onSimulateUser, branch
                     disabled={editingUser.username === 'admin'}
                     onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                   >
-                    <option value="accountant">Head Cashier</option>
-                    <option value="supervisor">Branch Supervisor</option>
-                    <option value="staff">Terminal Staff</option>
-                    <option value="admin">System Administrator</option>
+                    {Object.keys(roles).map((rKey) => (
+                      <option key={rKey} value={rKey}>
+                        {roles[rKey]?.label || rKey}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
