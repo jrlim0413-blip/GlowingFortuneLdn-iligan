@@ -1,3 +1,5 @@
+const proxyReportCache = new Map();
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -238,6 +240,13 @@ export default async function handler(req, res) {
   }
 
   if (targetUrl) {
+    const cacheKey = targetUrl;
+    const cached = proxyReportCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < 15000) {
+      return res.status(200).json(cached.data);
+    }
+
     try {
       const apiRes = await fetch(targetUrl, {
         headers: {
@@ -246,6 +255,9 @@ export default async function handler(req, res) {
         },
       });
       const data = await apiRes.json();
+      if (apiRes.ok && data) {
+        proxyReportCache.set(cacheKey, { data, timestamp: now });
+      }
       return res.status(apiRes.status).json(data);
     } catch (err) {
       return res.status(500).json({ error: err.message || 'Serverless proxy request failed' });

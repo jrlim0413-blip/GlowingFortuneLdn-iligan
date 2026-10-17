@@ -2016,7 +2016,17 @@ function App() {
   const isToday = selectedDate === getCurrentDate()
   const isYesterday = selectedDate === getYesterdayDate()
 
+  const reportCacheRef = useRef(new Map())
+  const isFetchingReportRef = useRef(false)
+
   const fetchProxiedReport = async (type, params) => {
+    const cacheKey = `${type}:${JSON.stringify(params)}`
+    const cached = reportCacheRef.current.get(cacheKey)
+    const now = Date.now()
+    if (cached && now - cached.time < 30000) {
+      return cached.data
+    }
+
     if (typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
       try {
         const pUrl = new URL('/api/proxy', window.location.origin)
@@ -2026,9 +2036,15 @@ function App() {
         })
         const pRes = await fetch(pUrl)
         if (pRes.ok) {
-          return await pRes.json()
+          const resData = await pRes.json()
+          reportCacheRef.current.set(cacheKey, { data: resData, time: now })
+          return resData
+        }
+        if (pRes.status === 429) {
+          throw new Error('Rate limit reached (429). Please wait a moment before refreshing.')
         }
       } catch (e) {
+        if (e.message && e.message.includes('Rate limit')) throw e
         console.warn('Proxy report error, falling back:', e)
       }
     }
@@ -2063,11 +2079,18 @@ function App() {
       fallbackUrl = u.toString()
     }
     const fRes = await fetch(fallbackUrl, { headers })
+    if (fRes.status === 429) {
+      throw new Error('Rate limit reached (429). Please wait a moment before refreshing.')
+    }
     if (!fRes.ok) throw new Error(`Request failed (${fRes.status})`)
-    return await fRes.json()
+    const finalData = await fRes.json()
+    reportCacheRef.current.set(cacheKey, { data: finalData, time: now })
+    return finalData
   }
 
   const loadReport = useCallback(async (targetDate = selectedDate) => {
+    if (isFetchingReportRef.current) return
+    isFetchingReportRef.current = true
     const queryDate = targetDate || selectedDate || getCurrentDate()
     setLoading(true)
     setError('')
@@ -2095,18 +2118,25 @@ function App() {
 
       let reportRows = []
       if (drawApiUrl && targetDrawIds.length > 0) {
-        const [responses, supervisorResponse] = await Promise.all([
-          Promise.all(targetDrawIds.map(async (drawId) => {
+        const responses = []
+        for (const drawId of targetDrawIds) {
+          try {
             const drawData = await fetchProxiedReport('draw', { drawId, from: queryDate, to: getNextDate(queryDate) })
-            return normalizeRows(drawData)
-          })),
-          supervisorApiUrl
-            ? (async () => {
-                const spvrData = await fetchProxiedReport('supervisor', { from: queryDate, to: getNextDate(queryDate) })
-                return normalizeRows(spvrData)
-              })()
-            : Promise.resolve([])
-        ])
+            responses.push(normalizeRows(drawData))
+          } catch (dErr) {
+            console.warn(`Draw ${drawId} fetch warning:`, dErr)
+          }
+        }
+
+        let supervisorResponse = []
+        if (supervisorApiUrl) {
+          try {
+            const spvrData = await fetchProxiedReport('supervisor', { from: queryDate, to: getNextDate(queryDate) })
+            supervisorResponse = normalizeRows(spvrData)
+          } catch (sErr) {
+            console.warn('Supervisor fetch warning:', sErr)
+          }
+        }
 
         reportRows = responses.flat()
         setSupervisorRows(supervisorResponse)
@@ -2131,8 +2161,9 @@ function App() {
       setOverallDraws([])
     } finally {
       setLoading(false)
+      isFetchingReportRef.current = false
     }
-  }, [currentUser, selectedDate])
+  }, [selectedDate])
 
   const handleDateChange = (newDate) => {
     if (!newDate) return
@@ -2142,11 +2173,12 @@ function App() {
 
   useEffect(() => {
     if (!currentUser) return
+    if (activeView !== 'overview' && activeView !== 'reports') return
     const timeoutId = window.setTimeout(() => {
       loadReport(selectedDate)
     }, 0)
     return () => window.clearTimeout(timeoutId)
-  }, [activeView, currentUser, loadReport, selectedDate])
+  }, [activeView, selectedDate])
 
   const rawBranchName = (!import.meta.env.VITE_BRANCH_NAME && rows.find((r) => r?.location || r?.branch || r?.branchName)?.location) || configuredBranch
   const branchName = (rawBranchName || 'LDN').replace(/Mandaue/gi, 'LDN')
