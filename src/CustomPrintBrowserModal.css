@@ -543,15 +543,16 @@
 .visual-paper-sheet .statement-meta-pill {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
+  color: #0f172a !important;
 }
 
-.visual-paper-sheet .statement-meta-pill strong {
+.visual-paper-sheet .statement-meta-pill strong,
+.visual-paper-sheet .statement-meta-pill span {
   color: #0f172a !important;
 }
 
 .visual-paper-sheet .statement-meta-divider {
-  color: #cbd5e1 !important;
+  color: #94a3b8 !important;
 }
 
 .visual-paper-sheet .statement-company-title,

@@ -131,16 +131,12 @@
 }
 
 .modern-th-agent {
-  display: flex;
-  align-items: center;
-  padding: 2px 5px;
+  padding: 3px 6px;
   font-size: 8.5px;
   font-weight: 800;
   color: #334155;
   text-align: left;
   letter-spacing: 0.2px;
-  overflow: hidden;
-  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -218,7 +214,7 @@
 }
 
 .modern-tr {
-  height: 18px;
+  min-height: 18px;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -247,6 +243,7 @@
 .modern-td-detail {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
   width: 100%;
   min-width: 0;
@@ -255,10 +252,10 @@
 
 .modern-td-agent-label,
 .modern-draw-total-copy {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -277,14 +274,10 @@
 }
 
 .modern-teller-main {
-  flex: 0 1 auto;
-  min-width: 0;
   font-weight: 700;
   color: #0f172a;
   font-size: 8.5px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: clip;
 }
 
 .modern-td-amt {

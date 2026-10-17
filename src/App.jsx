@@ -799,14 +799,22 @@ function SupervisorStatementTable({
         <h3 className="statement-company-title">GLOWING FORTUNE CORPORATION</h3>
         <h4 className="statement-report-title">CONDENSED SUPERVISOR AGENT REMITTANCE SUMMARY</h4>
         <p className="statement-report-subtitle">(Unaudited — Official Draw Performance &amp; Accounting Ledger)</p>
-        <div className="statement-meta-row">
-          <span className="statement-meta-pill"><strong>BRANCH:</strong> {branchName}</span>
-          <span className="statement-meta-divider">•</span>
-          <span className="statement-meta-pill"><strong>SUPERVISOR:</strong> {group?.supervisor || 'ALL'}</span>
-          <span className="statement-meta-divider">•</span>
-          <span className="statement-meta-pill"><strong>DATE:</strong> {formatDisplayDate(selectedDate)}</span>
-          <span className="statement-meta-divider">•</span>
-          <span className="statement-meta-pill"><strong>TOTAL AGENTS:</strong> {group?.agents?.length || 0}</span>
+        <div className="statement-meta-row" style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#0f172a' }}>
+          <span className="statement-meta-pill" style={{ color: '#0f172a' }}>
+            <strong style={{ color: '#0f172a' }}>BRANCH:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{branchName || 'LDN'}</span>
+          </span>
+          <span className="statement-meta-divider" style={{ color: '#cbd5e1' }}>•</span>
+          <span className="statement-meta-pill" style={{ color: '#0f172a' }}>
+            <strong style={{ color: '#0f172a' }}>SUPERVISOR:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{group?.supervisor || 'ALL'}</span>
+          </span>
+          <span className="statement-meta-divider" style={{ color: '#cbd5e1' }}>•</span>
+          <span className="statement-meta-pill" style={{ color: '#0f172a' }}>
+            <strong style={{ color: '#0f172a' }}>DATE:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{formatDisplayDate(selectedDate)}</span>
+          </span>
+          <span className="statement-meta-divider" style={{ color: '#cbd5e1' }}>•</span>
+          <span className="statement-meta-pill" style={{ color: '#0f172a' }}>
+            <strong style={{ color: '#0f172a' }}>TOTAL AGENTS:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{group?.agents?.length || 0}</span>
+          </span>
         </div>
       </div>
 
@@ -853,10 +861,12 @@ function SupervisorStatementTable({
                       </td>
                       <td className="statement-td statement-num-td">{formatAmount(agent.hits)}</td>
                       <td className="statement-td statement-num-td">
-                        {formatAmount(agent.commission)}
-                        {agent.commissionRate && (
-                          <small style={{ display: 'block', fontSize: '8px', color: '#64748b' }}>({agent.commissionRate}%)</small>
-                        )}
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
+                          <span>{formatAmount(agent.commission)}</span>
+                          {agent.commissionRate && (
+                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                          )}
+                        </div>
                       </td>
                       <td className="statement-td statement-num-td">{formatAmount(agent.net)}</td>
                       <td className="statement-td statement-num-td statement-remit-td">
@@ -891,7 +901,7 @@ function SupervisorStatementTable({
                 </tr>
 
                 <tr className="statement-spacer-divider-row" aria-hidden="true">
-                  <td colSpan={6} />
+                  <td colSpan={6} style={{ height: '6px', lineHeight: '6px', padding: 0, border: 'none', background: 'transparent' }}>&nbsp;</td>
                 </tr>
 
                 <tr className="statement-section-divider-row statement-negative-header-row">
@@ -920,10 +930,12 @@ function SupervisorStatementTable({
                         {formatAmount(agent.hits)}
                       </td>
                       <td className="statement-td statement-num-td">
-                        {formatAmount(agent.commission)}
-                        {agent.commissionRate && (
-                          <small style={{ display: 'block', fontSize: '8px', color: '#64748b' }}>({agent.commissionRate}%)</small>
-                        )}
+                        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
+                          <span>{formatAmount(agent.commission)}</span>
+                          {agent.commissionRate && (
+                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                          )}
+                        </div>
                       </td>
                       <td className="statement-td statement-num-td accounting-deficit-text">
                         {formatAmount(agent.net)}
@@ -960,7 +972,7 @@ function SupervisorStatementTable({
                 </tr>
 
                 <tr className="statement-spacer-divider-row" aria-hidden="true">
-                  <td colSpan={6} />
+                  <td colSpan={6} style={{ height: '6px', lineHeight: '6px', padding: 0, border: 'none', background: 'transparent' }}>&nbsp;</td>
                 </tr>
 
                 <tr className="statement-grand-total-row">

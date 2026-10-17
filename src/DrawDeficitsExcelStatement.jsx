@@ -232,8 +232,7 @@ export default function DrawDeficitsExcelStatement({
 
   const renderTellerContent = (teller) => {
     if (!teller) return '\u00A0'
-    const parts = teller.split(' - ')
-    return <strong className="modern-teller-main" title={teller}>{parts[0]}</strong>
+    return <strong className="modern-teller-main" title={teller}>{teller}</strong>
   }
 
   return (
