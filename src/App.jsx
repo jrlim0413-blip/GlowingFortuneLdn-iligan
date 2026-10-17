@@ -1852,7 +1852,7 @@ function OverviewDashboard({
 
 function App() {
   const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [supervisorRows, setSupervisorRows] = useState([])
   const [overallDraws, setOverallDraws] = useState([])
@@ -2178,7 +2178,7 @@ function App() {
       loadReport(selectedDate)
     }, 0)
     return () => window.clearTimeout(timeoutId)
-  }, [activeView, selectedDate])
+  }, [activeView, currentUser, selectedDate])
 
   const rawBranchName = (!import.meta.env.VITE_BRANCH_NAME && rows.find((r) => r?.location || r?.branch || r?.branchName)?.location) || configuredBranch
   const branchName = (rawBranchName || 'LDN').replace(/Mandaue/gi, 'LDN')
