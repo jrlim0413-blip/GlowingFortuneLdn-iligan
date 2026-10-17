@@ -180,13 +180,21 @@ export function CustomPrintBrowserModal({
     setCopyToast('Capturing statement image...')
 
     try {
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready
+      }
+
       const canvas = await html2canvas(targetEl, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
+        windowWidth: 1280,
         logging: false,
         onclone: (clonedDoc) => {
+          clonedDoc.documentElement.setAttribute('data-theme', 'light')
+          clonedDoc.body.setAttribute('data-theme', 'light')
+
           const viewportTransform = clonedDoc.querySelector('.paper-viewport-transform')
           if (viewportTransform) {
             viewportTransform.style.transform = 'none'
@@ -195,7 +203,57 @@ export function CustomPrintBrowserModal({
           if (clonedSheet) {
             clonedSheet.style.boxShadow = 'none'
             clonedSheet.style.margin = '0'
+            clonedSheet.style.borderRadius = '0'
           }
+
+          const sheets = clonedDoc.querySelectorAll('.statement-sheet')
+          sheets.forEach((s) => {
+            s.style.transform = 'none'
+            s.style.width = '100%'
+            s.style.maxWidth = '100%'
+          })
+
+          const hiddenWrappers = clonedDoc.querySelectorAll('[style*="overflow: hidden"], [style*="overflow-x: hidden"]')
+          hiddenWrappers.forEach((w) => {
+            w.style.overflow = 'visible'
+          })
+
+          const styleTag = clonedDoc.createElement('style')
+          styleTag.textContent = `
+            .statement-meta-pill {
+              background: #f1f5f9 !important;
+              border: 1px solid #cbd5e1 !important;
+              color: #334155 !important;
+            }
+            .statement-meta-pill strong {
+              color: #0f172a !important;
+            }
+            .statement-meta-divider {
+              color: #cbd5e1 !important;
+            }
+            .statement-company-title, .statement-report-title {
+              color: #0f172a !important;
+            }
+            .statement-report-subtitle {
+              color: #64748b !important;
+            }
+            .statement-th {
+              color: #475569 !important;
+            }
+            .statement-td {
+              color: #334155 !important;
+            }
+            .statement-agent-name {
+              color: #1e293b !important;
+            }
+            .statement-subtotal-indent, .statement-subtotal-num-td, .statement-grand-label-td, .statement-grand-num-td, .statement-remit-td {
+              color: #0f172a !important;
+            }
+            .accounting-deficit-text, .statement-neg-label-indent {
+              color: #dc2626 !important;
+            }
+          `
+          clonedDoc.head.appendChild(styleTag)
         },
       })
 

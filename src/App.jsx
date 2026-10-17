@@ -913,30 +913,24 @@ function SupervisorStatementTable({
                         <span className="statement-agent-name">{agent.teller}</span>
                       </td>
                       <td className="statement-td statement-num-td">
-                        <AutoShrinkText align="right">
-                          {index === 0 && <span className="accounting-currency-symbol">₱</span>}
-                          {formatAmount(agent.gross)}
-                        </AutoShrinkText>
+                        {index === 0 && <span className="accounting-currency-symbol">₱</span>}
+                        {formatAmount(agent.gross)}
                       </td>
                       <td className="statement-td statement-num-td accounting-deficit-text">
-                        <AutoShrinkText align="right">{formatAmount(agent.hits)}</AutoShrinkText>
+                        {formatAmount(agent.hits)}
                       </td>
                       <td className="statement-td statement-num-td">
-                        <AutoShrinkText align="right">
-                          {formatAmount(agent.commission)}
-                          {agent.commissionRate && (
-                            <small style={{ display: 'inline-block', marginLeft: '3px', fontSize: '8px', color: '#64748b' }}>({agent.commissionRate}%)</small>
-                          )}
-                        </AutoShrinkText>
+                        {formatAmount(agent.commission)}
+                        {agent.commissionRate && (
+                          <small style={{ display: 'block', fontSize: '8px', color: '#64748b' }}>({agent.commissionRate}%)</small>
+                        )}
                       </td>
                       <td className="statement-td statement-num-td accounting-deficit-text">
-                        <AutoShrinkText align="right">{formatAmount(agent.net)}</AutoShrinkText>
+                        {formatAmount(agent.net)}
                       </td>
                       <td className="statement-td statement-num-td statement-remit-td accounting-deficit-text">
-                        <AutoShrinkText align="right">
-                          {index === 0 && <span className="accounting-currency-symbol">₱</span>}
-                          <strong>({formatAmount(Math.abs(agent.netSales))})</strong>
-                        </AutoShrinkText>
+                        {index === 0 && <span className="accounting-currency-symbol">₱</span>}
+                        <strong>({formatAmount(Math.abs(agent.netSales))})</strong>
                       </td>
                     </tr>
                   ))
@@ -947,31 +941,21 @@ function SupervisorStatementTable({
                     <span className="statement-subtotal-indent statement-neg-label-indent">Total Deficits (Subtotal)</span>
                   </td>
                   <td className="statement-td statement-subtotal-num-td statement-neg-subtotal-cell">
-                    <AutoShrinkText align="right">
-                      <span className="accounting-currency-symbol">₱</span>
-                      <strong>{formatAmount(negativeTotals.gross)}</strong>
-                    </AutoShrinkText>
+                    <span className="accounting-currency-symbol">₱</span>
+                    <strong>{formatAmount(negativeTotals.gross)}</strong>
                   </td>
                   <td className="statement-td statement-subtotal-num-td statement-neg-subtotal-cell accounting-deficit-text">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(negativeTotals.hits)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(negativeTotals.hits)}</strong>
                   </td>
                   <td className="statement-td statement-subtotal-num-td statement-neg-subtotal-cell">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(negativeTotals.commission)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(negativeTotals.commission)}</strong>
                   </td>
                   <td className="statement-td statement-subtotal-num-td statement-neg-subtotal-cell accounting-deficit-text">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(negativeTotals.net)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(negativeTotals.net)}</strong>
                   </td>
                   <td className="statement-td statement-subtotal-num-td statement-remit-td statement-neg-subtotal-cell accounting-deficit-text">
-                    <AutoShrinkText align="right">
-                      <span className="accounting-currency-symbol">₱</span>
-                      <strong>({formatAmount(Math.abs(negativeTotals.netSales))})</strong>
-                    </AutoShrinkText>
+                    <span className="accounting-currency-symbol">₱</span>
+                    <strong>({formatAmount(Math.abs(negativeTotals.netSales))})</strong>
                   </td>
                 </tr>
 
@@ -984,31 +968,21 @@ function SupervisorStatementTable({
                     <strong>CONSOLIDATED SUPERVISOR TOTAL</strong>
                   </td>
                   <td className="statement-td statement-grand-num-td">
-                    <AutoShrinkText align="right">
-                      <span className="accounting-currency-symbol">₱</span>
-                      <strong>{formatAmount(grandTotals.gross)}</strong>
-                    </AutoShrinkText>
+                    <span className="accounting-currency-symbol">₱</span>
+                    <strong>{formatAmount(grandTotals.gross)}</strong>
                   </td>
                   <td className="statement-td statement-grand-num-td">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(grandTotals.hits)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(grandTotals.hits)}</strong>
                   </td>
                   <td className="statement-td statement-grand-num-td">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(grandTotals.commission)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(grandTotals.commission)}</strong>
                   </td>
                   <td className="statement-td statement-grand-num-td">
-                    <AutoShrinkText align="right">
-                      <strong>{formatAmount(grandTotals.net)}</strong>
-                    </AutoShrinkText>
+                    <strong>{formatAmount(grandTotals.net)}</strong>
                   </td>
                   <td className={`statement-td statement-grand-num-td statement-remit-td ${grandTotals.netSales < 0 ? 'accounting-deficit-text' : ''}`}>
-                    <AutoShrinkText align="right">
-                      <span className="accounting-currency-symbol">₱</span>
-                      <strong>{grandTotals.netSales < 0 ? `(${formatAmount(Math.abs(grandTotals.netSales))})` : formatAmount(grandTotals.netSales)}</strong>
-                    </AutoShrinkText>
+                    <span className="accounting-currency-symbol">₱</span>
+                    <strong>{grandTotals.netSales < 0 ? `(${formatAmount(Math.abs(grandTotals.netSales))})` : formatAmount(grandTotals.netSales)}</strong>
                   </td>
                 </tr>
               </tbody>

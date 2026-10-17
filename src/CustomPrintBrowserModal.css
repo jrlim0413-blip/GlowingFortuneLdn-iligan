@@ -540,6 +540,68 @@
   height: 100%;
 }
 
+.visual-paper-sheet .statement-meta-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.visual-paper-sheet .statement-meta-pill strong {
+  color: #0f172a !important;
+}
+
+.visual-paper-sheet .statement-meta-divider {
+  color: #cbd5e1 !important;
+}
+
+.visual-paper-sheet .statement-company-title,
+.visual-paper-sheet .statement-report-title {
+  color: #0f172a !important;
+}
+
+.visual-paper-sheet .statement-report-subtitle {
+  color: #64748b !important;
+}
+
+.visual-paper-sheet .statement-th {
+  color: #475569 !important;
+}
+
+.visual-paper-sheet .statement-td {
+  color: #334155 !important;
+}
+
+.visual-paper-sheet .statement-agent-name {
+  color: #1e293b !important;
+}
+
+.visual-paper-sheet .statement-subtotal-indent,
+.visual-paper-sheet .statement-subtotal-num-td,
+.visual-paper-sheet .statement-grand-label-td,
+.visual-paper-sheet .statement-grand-num-td,
+.visual-paper-sheet .statement-remit-td {
+  color: #0f172a !important;
+}
+
+.visual-paper-sheet .accounting-deficit-text,
+.visual-paper-sheet .statement-neg-label-indent {
+  color: #dc2626 !important;
+}
+
+.visual-paper-sheet .statement-data-row:nth-child(even) {
+  background: #fbfcfd !important;
+}
+
+.visual-paper-sheet .statement-section-heading-cell {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.visual-paper-sheet .statement-negative-heading-cell {
+  background: #fff1f2 !important;
+  color: #991b1b !important;
+}
+
 
 @media print {
   .custom-print-topbar,
