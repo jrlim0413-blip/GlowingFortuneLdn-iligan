@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import html2canvas from 'html2canvas'
 import { Icon } from './App' 
 
 export const PAPER_FORMATS = {
@@ -92,9 +93,12 @@ export function CustomPrintBrowserModal({
   const [computedFitScale, setComputedFitScale] = useState(100)
   const [isMeasuring, setIsMeasuring] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [copyStatus, setCopyStatus] = useState('idle')
+  const [copyToast, setCopyToast] = useState('')
 
   const stageRef = useRef(null)
   const pageFrameRef = useRef(null)
+  const sheetRef = useRef(null)
 
   useEffect(() => {
     inMemoryPrintSettings = { ...settings }
@@ -166,6 +170,79 @@ export function CustomPrintBrowserModal({
     setTimeout(() => {
       document.body.classList.remove('custom-print-active')
     }, 1000)
+  }
+
+  const handleCopyImage = async () => {
+    const targetEl = sheetRef.current || pageFrameRef.current
+    if (!targetEl || copyStatus === 'copying') return
+
+    setCopyStatus('copying')
+    setCopyToast('Capturing statement image...')
+
+    try {
+      const canvas = await html2canvas(targetEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        onclone: (clonedDoc) => {
+          const viewportTransform = clonedDoc.querySelector('.paper-viewport-transform')
+          if (viewportTransform) {
+            viewportTransform.style.transform = 'none'
+          }
+          const clonedSheet = clonedDoc.querySelector('.visual-paper-sheet')
+          if (clonedSheet) {
+            clonedSheet.style.boxShadow = 'none'
+            clonedSheet.style.margin = '0'
+          }
+        },
+      })
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b)
+          else reject(new Error('Canvas toBlob failed'))
+        }, 'image/png', 1.0)
+      })
+
+      let clipboardSuccess = false
+      if (navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({ 'image/png': blob })
+          await navigator.clipboard.write([item])
+          clipboardSuccess = true
+        } catch (clipErr) {
+          console.warn('Clipboard write failed, will download PNG:', clipErr)
+        }
+      }
+
+      if (clipboardSuccess) {
+        setCopyStatus('copied')
+        setCopyToast('✓ Statement image copied to clipboard! Ready to paste (Ctrl+V)')
+      } else {
+        const cleanSupervisor = (group?.supervisor || 'STATEMENT').replace(/[^a-zA-Z0-9_-]/g, '_')
+        const link = document.createElement('a')
+        link.download = `Statement_${cleanSupervisor}_${selectedDate || 'report'}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+        setCopyStatus('copied')
+        setCopyToast('✓ Image downloaded as PNG!')
+      }
+
+      setTimeout(() => {
+        setCopyStatus('idle')
+        setCopyToast('')
+      }, 4000)
+    } catch (err) {
+      console.error('Copy image error:', err)
+      setCopyStatus('error')
+      setCopyToast('Failed to copy image. Please try again.')
+      setTimeout(() => {
+        setCopyStatus('idle')
+        setCopyToast('')
+      }, 3500)
+    }
   }
 
   if (!isOpen) return null
@@ -279,6 +356,21 @@ export function CustomPrintBrowserModal({
           </div>
 
           <div className="print-topbar-right">
+            {copyToast && (
+              <div className={`print-copy-toast ${copyStatus}`}>
+                {copyToast}
+              </div>
+            )}
+            <button
+              type="button"
+              className={`print-copy-image-btn ${copyStatus === 'copied' ? 'is-copied' : ''} ${copyStatus === 'copying' ? 'is-copying' : ''}`}
+              onClick={handleCopyImage}
+              disabled={copyStatus === 'copying'}
+              title="Copy high-resolution image of statement report to clipboard (Ctrl+V to paste into Messenger, Viber, etc.)"
+            >
+              <Icon name={copyStatus === 'copied' ? "check" : (copyStatus === 'copying' ? "refresh" : "copy")} size={16} />
+              <span>{copyStatus === 'copied' ? "Image Copied!" : (copyStatus === 'copying' ? "Capturing..." : "Copy Image")}</span>
+            </button>
             <button
               type="button"
               className={`print-primary-btn ${!canPrint ? 'is-perm-locked' : ''}`}
@@ -516,6 +608,7 @@ export function CustomPrintBrowserModal({
               {}
               <div
                 className={`visual-paper-sheet ${settings.colorMode === 'bw' ? 'mode-monochrome' : ''}`}
+                ref={sheetRef}
                 style={{
                   width: `${settings.orientation === 'landscape' ? currentPaper.heightPx : currentPaper.widthPx}px`,
                   minHeight: `${settings.orientation === 'landscape' ? currentPaper.widthPx : currentPaper.heightPx}px`,

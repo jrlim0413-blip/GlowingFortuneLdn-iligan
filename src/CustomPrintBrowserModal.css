@@ -181,6 +181,83 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
+}
+
+.print-copy-image-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid #059669;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.print-copy-image-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857, #059669);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+.print-copy-image-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.print-copy-image-btn.is-copied {
+  background: linear-gradient(135deg, #065f46, #047857);
+  border-color: #34d399;
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.55);
+}
+
+.print-copy-image-btn.is-copying {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.print-copy-image-btn.is-copying svg {
+  animation: printCopySpin 0.8s linear infinite;
+}
+
+@keyframes printCopySpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.print-copy-toast {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ecfdf5;
+  background: #064e3b;
+  border: 1px solid #10b981;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  white-space: nowrap;
+  animation: customPrintToastIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.print-copy-toast.error {
+  color: #fef2f2;
+  background: #7f1d1d;
+  border-color: #ef4444;
+}
+
+@keyframes customPrintToastIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .print-primary-btn {
