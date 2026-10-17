@@ -738,7 +738,7 @@ function SupervisorStatementTable({
   const [computedScale, setComputedScale] = useState(fitOnePage ? (fontScale || 100) : 100)
 
   useLayoutEffect(() => {
-    if (!fitOnePage || !sheetRef.current || !wrapRef.current) return
+    if (!fitOnePage || isModal || !sheetRef.current || !wrapRef.current) return
 
     let raf = 0
     const measureFit = () => {
@@ -771,10 +771,20 @@ function SupervisorStatementTable({
       cancelAnimationFrame(raf)
       resizeObserver.disconnect()
     }
-  }, [fitOnePage, group?.agents?.length, group?.supervisor])
+  }, [fitOnePage, isModal, group?.agents?.length, group?.supervisor])
 
   useLayoutEffect(() => {
-    if (!fitOnePage || !sheetRef.current || !wrapRef.current) return
+    if (!fitOnePage || isModal || !sheetRef.current || !wrapRef.current) {
+      if (sheetRef.current) {
+        sheetRef.current.style.transform = ''
+        sheetRef.current.style.transformOrigin = ''
+        sheetRef.current.style.width = '100%'
+      }
+      if (wrapRef.current) {
+        wrapRef.current.style.height = 'auto'
+      }
+      return
+    }
     if (computedScale < 100) {
       const s = (computedScale / 100).toFixed(4)
       sheetRef.current.style.transformOrigin = 'top left'
@@ -788,7 +798,7 @@ function SupervisorStatementTable({
       sheetRef.current.style.width = ''
       wrapRef.current.style.height = ''
     }
-  }, [computedScale, fitOnePage])
+  }, [computedScale, fitOnePage, isModal])
 
   return (
     <div ref={wrapRef} style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
@@ -980,7 +990,7 @@ function SupervisorStatementTable({
 
                 <tr className="statement-grand-total-row">
                   <td className="statement-td statement-grand-label-td">
-                    <strong>CONSOLIDATED SUPERVISOR TOTAL</strong>
+                    <strong>CONSOLIDATED TOTAL</strong>
                   </td>
                   <td className="statement-td statement-grand-num-td">
                     <span className="accounting-currency-symbol">₱</span>

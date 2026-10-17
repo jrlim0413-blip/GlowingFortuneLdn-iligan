@@ -1616,6 +1616,17 @@ button { font: inherit; }
   padding: 6px 8px !important;
 }
 
+.visual-paper-sheet .statement-sheet {
+  min-height: auto !important;
+  justify-content: flex-start !important;
+  transform: none !important;
+  width: 100% !important;
+}
+
+.visual-paper-sheet .statement-signatures-section {
+  margin-top: 24px !important;
+}
+
 .statement-embedded-draw-deficits {
   margin-top: 4px;
   margin-bottom: 4px;
