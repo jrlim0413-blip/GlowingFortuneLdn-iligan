@@ -289,7 +289,10 @@ export default function LoginPage({ onLoginSuccess, branchName = 'LDN' }) {
         try {
           const loginUrl = (typeof window !== 'undefined' && window.location.protocol.startsWith('http'))
             ? new URL('/api/proxy?action=login', window.location.origin)
-            : new URL('https://stl-ldn-api.com/api/accountant/login')
+            : (import.meta.env.VITE_LOGIN_API_URL ? new URL(import.meta.env.VITE_LOGIN_API_URL) : null)
+          if (!loginUrl) {
+            throw new Error('Login endpoint not configured')
+          }
           const res = await fetch(loginUrl, {
             method: 'POST',
             headers: {

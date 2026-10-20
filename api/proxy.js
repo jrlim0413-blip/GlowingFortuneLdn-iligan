@@ -9,17 +9,10 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const DEFAULT_SUPABASE_URL = 'https://snemagtefsfuagzdhzmq.supabase.co';
-  const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuZW1hZ3RlZnNmdWFnemRoem1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MDg4NjgsImV4cCI6MjEwNzM4NDg2OH0.Pym6MwNdX9vMDk-zbOGqCqfCjYUZqxMl9kpkwQfTo_A';
-
-  let SUPABASE_URL = (process.env.VITE_SUPABASE_URL || '').trim();
-  let SUPABASE_KEY = (process.env.VITE_SUPABASE_ANON_KEY || '').trim();
-
-  if (!SUPABASE_URL || SUPABASE_URL.includes('ejtsskrbkaqfdcouwvzh') || !SUPABASE_KEY || SUPABASE_KEY.includes('whKp_OjW')) {
-    SUPABASE_URL = DEFAULT_SUPABASE_URL;
-    SUPABASE_KEY = DEFAULT_SUPABASE_KEY;
-  }
-  const authBearer = process.env.VITE_AUTHORIZATION || '74242|PwJgY3Ia4jzsBUGsfyedB3BvpelUP0Sb9XxcYZmE';
+  const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
+  const SUPABASE_KEY = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+  const authBearer = (process.env.VITE_AUTHORIZATION || process.env.AUTHORIZATION || '').trim();
+  const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
   const supaHeaders = {
     'apikey': SUPABASE_KEY,
@@ -30,7 +23,23 @@ export default async function handler(req, res) {
 
   const { action, type, from, to, drawId, id, token, username } = req.query || {};
 
+  if (!isSupabaseConfigured && action && ['get_matrix', 'get_commissions', 'get_users', 'save_matrix', 'save_commissions', 'save_user', 'delete_user', 'create_session', 'revoke_session'].includes(action)) {
+    if (action === 'get_matrix') return res.status(200).json({ success: true, config: null });
+    if (action === 'get_commissions') return res.status(200).json({ success: true, settings: null });
+    if (action === 'get_users') return res.status(200).json({ success: true, data: [] });
+    return res.status(200).json({ success: true, inMemoryOnly: true, warning: 'Supabase credentials not configured in Vercel environment variables' });
+  }
+
   if (action === 'boot') {
+    if (!isSupabaseConfigured) {
+      return res.status(200).json({
+        success: true,
+        matrix: null,
+        commissions: null,
+        users: [],
+        sessionUser: null,
+      });
+    }
     try {
       const [matrixRes, commRes, usersRes] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/rbac_matrix_config?id=eq.matrix_config&select=config`, { headers: supaHeaders }),
@@ -215,8 +224,23 @@ export default async function handler(req, res) {
 
   if (action === 'login') {
     try {
+      const baseTeller = (process.env.VITE_API_URL || process.env.API_URL || '').trim();
+      let derivedLogin = '';
+      if (baseTeller) {
+        try {
+          const parsed = new URL(baseTeller);
+          derivedLogin = `${parsed.origin}/api/accountant/login`;
+        } catch { }
+      }
+      const loginEndpoint = (process.env.VITE_LOGIN_API_URL || process.env.LOGIN_API_URL || derivedLogin || '').trim();
+      if (!loginEndpoint) {
+        return res.status(400).json({
+          success: false,
+          error: 'Login API URL is not configured in Vercel environment variables (VITE_LOGIN_API_URL or VITE_API_URL)',
+        });
+      }
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const r = await fetch('https://stl-ldn-api.com/api/accountant/login', {
+      const r = await fetch(loginEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(body),
@@ -229,14 +253,41 @@ export default async function handler(req, res) {
   }
 
   let targetUrl = '';
+  const baseTeller = (process.env.VITE_API_URL || process.env.API_URL || '').trim();
+  const baseDraw = (process.env.VITE_DRAW_API_URL || process.env.DRAW_API_URL || '').trim();
+  const baseOverall = (process.env.VITE_OVERALL_API_URL || process.env.OVERALL_API_URL || '').trim();
+  const baseSupervisor = (process.env.VITE_SUPERVISOR_API_URL || process.env.SUPERVISOR_API_URL || '').trim();
+
   if (type === 'overall') {
-    targetUrl = `https://stl-ldn-api.com/api/accountant/OverAllReports?id=${id || 5}&from=${from}&to=${to}`;
+    if (!baseOverall) return res.status(400).json({ error: 'Overall API URL (VITE_OVERALL_API_URL) is not configured in environment variables' });
+    const u = new URL(baseOverall.includes('?') ? baseOverall : `${baseOverall}?id=${id || 5}`);
+    if (from) u.searchParams.set('from', from);
+    if (to) u.searchParams.set('to', to);
+    if (id) u.searchParams.set('id', id);
+    targetUrl = u.toString();
   } else if (type === 'draw') {
-    targetUrl = `https://stl-ldn-api.com/api/accountant/GrossPerDraw?id=${id || 5}&drawId=${drawId}&from=${from}&to=${to}`;
+    if (!baseDraw) return res.status(400).json({ error: 'Draw API URL (VITE_DRAW_API_URL) is not configured in environment variables' });
+    const u = new URL(baseDraw.includes('?') ? baseDraw : `${baseDraw}?id=${id || 5}`);
+    if (drawId) u.searchParams.set('drawId', drawId);
+    if (from) u.searchParams.set('from', from);
+    if (to) u.searchParams.set('to', to);
+    if (id) u.searchParams.set('id', id);
+    targetUrl = u.toString();
   } else if (type === 'supervisor') {
-    targetUrl = `https://stl-ldn-api.com/api/accountant/AccountantSpvrWithGross?id=${id || 5}&from=${from}&to=${to}`;
+    if (!baseSupervisor) return res.status(400).json({ error: 'Supervisor API URL (VITE_SUPERVISOR_API_URL) is not configured in environment variables' });
+    const u = new URL(baseSupervisor.includes('?') ? baseSupervisor : `${baseSupervisor}?id=${id || 5}`);
+    if (from) u.searchParams.set('from', from);
+    if (to) u.searchParams.set('to', to);
+    if (id) u.searchParams.set('id', id);
+    if (drawId) u.searchParams.set('drawId', drawId);
+    targetUrl = u.toString();
   } else if (type === 'teller') {
-    targetUrl = `https://stl-ldn-api.com/api/accountant/TellerGrossPerDay?id=${id || 5}&from=${from}&to=${to}`;
+    if (!baseTeller) return res.status(400).json({ error: 'Teller API URL (VITE_API_URL) is not configured in environment variables' });
+    const u = new URL(baseTeller.includes('?') ? baseTeller : `${baseTeller}?id=${id || 5}`);
+    if (from) u.searchParams.set('from', from);
+    if (to) u.searchParams.set('to', to);
+    if (id) u.searchParams.set('id', id);
+    targetUrl = u.toString();
   }
 
   if (targetUrl) {
@@ -248,12 +299,15 @@ export default async function handler(req, res) {
     }
 
     try {
-      const apiRes = await fetch(targetUrl, {
-        headers: {
-          Authorization: `Bearer ${authBearer}`,
-          Accept: 'application/json',
-        },
-      });
+      const headers = {
+        Accept: 'application/json',
+      };
+      const clientAuth = req.headers && (req.headers.authorization || req.headers.Authorization);
+      const effectiveAuth = authBearer || clientAuth || '';
+      if (effectiveAuth) {
+        headers['Authorization'] = effectiveAuth.startsWith('Bearer ') ? effectiveAuth : `Bearer ${effectiveAuth}`;
+      }
+      const apiRes = await fetch(targetUrl, { headers });
       const data = await apiRes.json();
       if (apiRes.ok && data) {
         proxyReportCache.set(cacheKey, { data, timestamp: now });
