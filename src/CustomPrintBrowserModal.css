@@ -736,17 +736,79 @@ body.custom-print-capturing .statement-balance-table {
 
 .visual-paper-sheet.statement-print-exact-mode .statement-th-agent,
 .statement-print-exact-mode .statement-th-agent,
-body.custom-print-capturing .statement-th-agent {
-  width: 32% !important;
+body.custom-print-capturing .statement-th-agent,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(1),
+.statement-print-exact-mode .statement-balance-table th:nth-child(1),
+body.custom-print-capturing .statement-balance-table th:nth-child(1) {
+  width: 28% !important;
   font-size: 7pt !important;
   padding: 2pt 3pt !important;
   text-align: left !important;
 }
 
+.visual-paper-sheet.statement-print-exact-mode .statement-th-gross,
+.statement-print-exact-mode .statement-th-gross,
+body.custom-print-capturing .statement-th-gross,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(2),
+.statement-print-exact-mode .statement-balance-table th:nth-child(2),
+body.custom-print-capturing .statement-balance-table th:nth-child(2) {
+  width: 15% !important;
+  font-size: 7pt !important;
+  padding: 2pt 3pt !important;
+  text-align: right !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-th-hits,
+.statement-print-exact-mode .statement-th-hits,
+body.custom-print-capturing .statement-th-hits,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(3),
+.statement-print-exact-mode .statement-balance-table th:nth-child(3),
+body.custom-print-capturing .statement-balance-table th:nth-child(3) {
+  width: 13.5% !important;
+  font-size: 7pt !important;
+  padding: 2pt 3pt !important;
+  text-align: right !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-th-comm,
+.statement-print-exact-mode .statement-th-comm,
+body.custom-print-capturing .statement-th-comm,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(4),
+.statement-print-exact-mode .statement-balance-table th:nth-child(4),
+body.custom-print-capturing .statement-balance-table th:nth-child(4) {
+  width: 13.5% !important;
+  font-size: 7pt !important;
+  padding: 2pt 3pt !important;
+  text-align: right !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-th-net,
+.statement-print-exact-mode .statement-th-net,
+body.custom-print-capturing .statement-th-net,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(5),
+.statement-print-exact-mode .statement-balance-table th:nth-child(5),
+body.custom-print-capturing .statement-balance-table th:nth-child(5) {
+  width: 14% !important;
+  font-size: 7pt !important;
+  padding: 2pt 3pt !important;
+  text-align: right !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-th-remit,
+.statement-print-exact-mode .statement-th-remit,
+body.custom-print-capturing .statement-th-remit,
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table th:nth-child(6),
+.statement-print-exact-mode .statement-balance-table th:nth-child(6),
+body.custom-print-capturing .statement-balance-table th:nth-child(6) {
+  width: 16% !important;
+  font-size: 7pt !important;
+  padding: 2pt 3pt !important;
+  text-align: right !important;
+}
+
 .visual-paper-sheet.statement-print-exact-mode .statement-th-num,
 .statement-print-exact-mode .statement-th-num,
 body.custom-print-capturing .statement-th-num {
-  width: 13.6% !important;
   font-size: 7pt !important;
   padding: 2pt 3pt !important;
   text-align: right !important;
@@ -755,20 +817,23 @@ body.custom-print-capturing .statement-th-num {
 .visual-paper-sheet.statement-print-exact-mode .statement-td,
 .statement-print-exact-mode .statement-td,
 body.custom-print-capturing .statement-td {
-  padding: 1.5pt 2.5pt !important;
+  padding: 1pt 2pt !important;
   font-size: 7.8pt !important;
   color: #0f172a !important;
   border-bottom: 0.4pt solid #e2e8f0 !important;
-  line-height: 1.35 !important;
+  line-height: 1.15 !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .statement-agent-td,
 .statement-print-exact-mode .statement-agent-td,
 body.custom-print-capturing .statement-agent-td {
-  padding-left: 2.5pt !important;
-  white-space: normal !important;
-  word-break: break-word !important;
-  overflow: visible !important;
+  padding-left: 2pt !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .statement-agent-name,
@@ -776,43 +841,92 @@ body.custom-print-capturing .statement-agent-td {
 body.custom-print-capturing .statement-agent-name {
   font-weight: 600 !important;
   color: #0f172a !important;
-  white-space: normal !important;
-  word-break: break-word !important;
-  overflow: visible !important;
-  text-overflow: unset !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
   max-width: 100% !important;
-  display: block !important;
-  line-height: 1.35 !important;
+  display: inline-block !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-balance-table td.statement-num-td,
+.statement-print-exact-mode .statement-balance-table td.statement-num-td,
+body.custom-print-capturing .statement-balance-table td.statement-num-td,
+.visual-paper-sheet.statement-print-exact-mode .statement-subtotal-num-td,
+.statement-print-exact-mode .statement-subtotal-num-td,
+body.custom-print-capturing .statement-subtotal-num-td,
+.visual-paper-sheet.statement-print-exact-mode .statement-grand-num-td,
+.statement-print-exact-mode .statement-grand-num-td,
+body.custom-print-capturing .statement-grand-num-td {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .accounting-currency-symbol,
+.statement-print-exact-mode .accounting-currency-symbol,
+body.custom-print-capturing .accounting-currency-symbol {
+  float: left !important;
+  font-size: 6.5pt !important;
+  color: #64748b !important;
+  font-weight: normal !important;
+  margin-right: 1pt !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .modern-td-detail,
+.statement-print-exact-mode .modern-td-detail,
+body.custom-print-capturing .modern-td-detail {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2pt !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .modern-td-agent-label,
 .statement-print-exact-mode .modern-td-agent-label,
-body.custom-print-capturing .modern-td-agent-label {
+body.custom-print-capturing .modern-td-agent-label,
+.visual-paper-sheet.statement-print-exact-mode .modern-draw-total-copy,
+.statement-print-exact-mode .modern-draw-total-copy,
+body.custom-print-capturing .modern-draw-total-copy {
   min-width: 0 !important;
-  flex: 1 1 auto !important;
-  overflow: visible !important;
-  text-overflow: unset !important;
-  white-space: normal !important;
-  word-break: break-word !important;
-  line-height: 1.35 !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .modern-teller-main,
 .statement-print-exact-mode .modern-teller-main,
 body.custom-print-capturing .modern-teller-main {
-  font-size: 7.5pt !important;
-  white-space: normal !important;
-  word-break: break-word !important;
+  font-size: 7.2pt !important;
+  color: #0f172a !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .modern-td-name,
 .statement-print-exact-mode .modern-td-name,
 body.custom-print-capturing .modern-td-name {
   padding: 0.8pt 3pt !important;
-  font-size: 7.5pt !important;
-  overflow: visible !important;
-  white-space: normal !important;
-  line-height: 1.35 !important;
+  font-size: 7.2pt !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .modern-amount-text,
+.statement-print-exact-mode .modern-amount-text,
+body.custom-print-capturing .modern-amount-text {
+  font-size: 6.8pt !important;
+  font-weight: 900 !important;
+  color: #991b1b !important;
+  background: #fee2e2 !important;
+  border: 0.4pt solid #fca5a5 !important;
+  border-radius: 1.5pt !important;
+  padding: 0.1pt 2pt !important;
+  display: inline-block !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .modern-draw-total-label,
@@ -821,16 +935,26 @@ body.custom-print-capturing .modern-draw-total-label {
   padding: 1.5pt 3pt !important;
   font-size: 7.8pt !important;
   overflow: visible !important;
-  white-space: normal !important;
+  white-space: nowrap !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .statement-subtotal-data-row .statement-td,
 .statement-print-exact-mode .statement-subtotal-data-row .statement-td,
 body.custom-print-capturing .statement-subtotal-data-row .statement-td {
-  padding: 1.5pt 3pt !important;
-  font-size: 7.8pt !important;
+  padding: 1.2pt 2pt !important;
+  font-size: 7.5pt !important;
   font-weight: 700 !important;
   background: #fafafa !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-subtotal-num-td,
+.statement-print-exact-mode .statement-subtotal-num-td,
+body.custom-print-capturing .statement-subtotal-num-td {
+  border-top: 1pt solid #0f172a !important;
+  border-bottom: 0.75pt solid #0f172a !important;
+  padding: 1.2pt 2pt !important;
+  font-size: 7.5pt !important;
+  font-weight: 700 !important;
 }
 
 .visual-paper-sheet.statement-print-exact-mode .statement-grand-label-td,
@@ -844,9 +968,10 @@ body.custom-print-capturing .statement-grand-label-td {
 .visual-paper-sheet.statement-print-exact-mode .statement-grand-num-td,
 .statement-print-exact-mode .statement-grand-num-td,
 body.custom-print-capturing .statement-grand-num-td {
-  padding: 2pt 3pt !important;
-  font-size: 8.5pt !important;
-  font-weight: 900 !important;
+  padding: 1.5pt 2pt !important;
+  font-size: 7.8pt !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.15px !important;
   border-top: 1.5pt solid #0f172a !important;
   border-bottom: 3pt double #0f172a !important;
 }

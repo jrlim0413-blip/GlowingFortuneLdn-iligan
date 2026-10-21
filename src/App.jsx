@@ -842,10 +842,10 @@ function SupervisorStatementTable({
               <thead>
                 <tr className="statement-th-row">
                   <th className="statement-th statement-th-agent">AGENT / TELLER</th>
-                  <th className="statement-th statement-th-num">GROSS</th>
-                  <th className="statement-th statement-th-num">HITS</th>
-                  <th className="statement-th statement-th-num">COMM</th>
-                  <th className="statement-th statement-th-num">NET</th>
+                  <th className="statement-th statement-th-num statement-th-gross">GROSS</th>
+                  <th className="statement-th statement-th-num statement-th-hits">HITS</th>
+                  <th className="statement-th statement-th-num statement-th-comm">COMM</th>
+                  <th className="statement-th statement-th-num statement-th-net">NET</th>
                   <th className="statement-th statement-th-num statement-th-remit">REMITTANCE</th>
                 </tr>
               </thead>

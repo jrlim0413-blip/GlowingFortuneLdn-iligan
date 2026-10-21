@@ -236,11 +236,22 @@ export function CustomPrintBrowserModal({
             fixStyle.textContent = `
               .statement-agent-name, .modern-td-agent-label, .modern-draw-total-copy, .modern-td-name, .modern-draw-total-label {
                 overflow: visible !important;
-                line-height: 1.35 !important;
+                line-height: 1.25 !important;
                 text-overflow: clip !important;
               }
               .statement-td, .modern-td-name, .modern-td-amt, .statement-th {
-                line-height: 1.35 !important;
+                line-height: 1.2 !important;
+              }
+              .statement-balance-table td.statement-num-td,
+              .statement-balance-table td.statement-subtotal-num-td,
+              .statement-balance-table td.statement-grand-num-td,
+              .statement-num-td,
+              .statement-subtotal-num-td,
+              .statement-grand-num-td {
+                overflow: visible !important;
+                text-overflow: clip !important;
+                white-space: nowrap !important;
+                max-width: none !important;
               }
               .statement-balance-table, .modern-single-col-table {
                 border-collapse: separate !important;

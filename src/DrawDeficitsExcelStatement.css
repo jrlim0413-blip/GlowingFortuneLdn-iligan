@@ -231,12 +231,13 @@
 }
 
 .modern-td-name {
-  padding: 2.5px 5px;
+  padding: 1.5px 5px;
   font-size: 8.5px;
   color: #0f172a;
   vertical-align: middle;
   white-space: nowrap;
-  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .modern-td-detail {
@@ -247,28 +248,18 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  line-height: 1.35;
 }
 
-.modern-td-agent-label {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: visible;
-  text-overflow: unset;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.35;
-  padding: 1px 0;
-}
-
+.modern-td-agent-label,
 .modern-draw-total-copy {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: visible;
-  text-overflow: unset;
+  overflow: hidden;
+  text-overflow: clip;
   white-space: nowrap;
-  line-height: 1.35;
-  padding: 1px 0;
+}
+
+.modern-draw-total-copy {
   display: flex;
   align-items: center;
   gap: 3px;
@@ -286,8 +277,9 @@
   font-weight: 700;
   color: #0f172a;
   font-size: 8.5px;
-  white-space: normal;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .modern-td-amt {
@@ -439,38 +431,26 @@
     font-size: 7.2pt !important;
     padding: 0.8pt 3pt !important;
     width: auto !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    white-space: normal !important;
-    line-height: 1.35 !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
   }
 
   .modern-td-detail {
     display: flex !important;
     align-items: center !important;
+    justify-content: space-between !important;
     gap: 2pt !important;
     width: 100% !important;
     min-width: 0 !important;
-    line-height: 1.35 !important;
   }
 
-  .modern-td-agent-label {
-    min-width: 0 !important;
-    flex: 1 1 auto !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    line-height: 1.35 !important;
-  }
-
+  .modern-td-agent-label,
   .modern-draw-total-copy {
     min-width: 0 !important;
-    flex: 1 1 auto !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
     white-space: nowrap !important;
-    line-height: 1.35 !important;
   }
 
   .modern-td-detail .modern-amount-text,
@@ -488,14 +468,13 @@
   }
 
   .modern-teller-main {
-    flex: 1 1 auto !important;
+    flex: 0 1 auto !important;
     min-width: 0 !important;
     font-size: 7.2pt !important;
     color: #0f172a !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    white-space: normal !important;
-    word-break: break-word !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
   }
 
   .modern-td-amt {
