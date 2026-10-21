@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import html2canvas from 'html2canvas'
+import { toBlob as toImageBlob, toPng as toImagePng } from 'html-to-image'
 import { Icon } from './App' 
 
 export const PAPER_FORMATS = {
@@ -177,45 +178,88 @@ export function CustomPrintBrowserModal({
     if (!targetEl || copyStatus === 'copying') return
 
     setCopyStatus('copying')
-    setCopyToast('Capturing statement image...')
+    setCopyToast('Capturing high-resolution statement image...')
+
+    const viewportTransform = targetEl.closest('.paper-viewport-transform') || document.querySelector('.paper-viewport-transform')
+    const originalTransform = viewportTransform ? viewportTransform.style.transform : ''
 
     try {
+      if (viewportTransform) {
+        viewportTransform.style.transform = 'none'
+      }
+
       if (document.fonts && document.fonts.ready) {
         await document.fonts.ready
       }
 
-      const canvas = await html2canvas(targetEl, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (clonedDoc) => {
-          clonedDoc.documentElement.setAttribute('data-theme', 'light')
-          clonedDoc.body.setAttribute('data-theme', 'light')
+      let blob = null
+      let dataUrl = null
 
-          const viewportTransform = clonedDoc.querySelector('.paper-viewport-transform')
-          if (viewportTransform) {
-            viewportTransform.style.transform = 'none'
-          }
+      try {
+        blob = await toImageBlob(targetEl, {
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+          cacheBust: true,
+          style: {
+            boxShadow: 'none',
+            margin: '0',
+          },
+        })
+      } catch (imgErr) {
+        console.warn('html-to-image capture note, attempting html2canvas fallback:', imgErr)
+      }
 
-          const clonedSheet = clonedDoc.querySelector('.visual-paper-sheet')
-          if (clonedSheet) {
-            clonedSheet.style.boxShadow = 'none'
-            clonedSheet.style.margin = '0'
-          }
-        },
-      })
+      if (!blob) {
+        const canvas = await html2canvas(targetEl, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          onclone: (clonedDoc) => {
+            clonedDoc.documentElement.setAttribute('data-theme', 'light')
+            clonedDoc.body.setAttribute('data-theme', 'light')
 
-      const blob = await new Promise((resolve, reject) => {
-        canvas.toBlob((b) => {
-          if (b) resolve(b)
-          else reject(new Error('Canvas toBlob failed'))
-        }, 'image/png', 1.0)
-      })
+            const vt = clonedDoc.querySelector('.paper-viewport-transform')
+            if (vt) vt.style.transform = 'none'
+
+            const clonedSheet = clonedDoc.querySelector('.visual-paper-sheet')
+            if (clonedSheet) {
+              clonedSheet.style.boxShadow = 'none'
+              clonedSheet.style.margin = '0'
+            }
+
+            const fixStyle = clonedDoc.createElement('style')
+            fixStyle.textContent = `
+              .statement-agent-name, .modern-td-agent-label, .modern-draw-total-copy, .modern-td-name, .modern-draw-total-label {
+                overflow: visible !important;
+                line-height: 1.35 !important;
+                text-overflow: clip !important;
+              }
+              .statement-td, .modern-td-name, .modern-td-amt, .statement-th {
+                line-height: 1.35 !important;
+              }
+              .statement-balance-table, .modern-single-col-table {
+                border-collapse: separate !important;
+                border-spacing: 0 !important;
+              }
+            `
+            clonedDoc.head.appendChild(fixStyle)
+          },
+        })
+
+        blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((b) => {
+            if (b) resolve(b)
+            else reject(new Error('Canvas toBlob failed'))
+          }, 'image/png', 1.0)
+        })
+
+        dataUrl = canvas.toDataURL('image/png')
+      }
 
       let clipboardSuccess = false
-      if (navigator.clipboard && window.ClipboardItem) {
+      if (navigator.clipboard && window.ClipboardItem && blob) {
         try {
           const item = new ClipboardItem({ 'image/png': blob })
           await navigator.clipboard.write([item])
@@ -228,14 +272,16 @@ export function CustomPrintBrowserModal({
       if (clipboardSuccess) {
         setCopyStatus('copied')
         setCopyToast('✓ Statement image copied to clipboard! Ready to paste (Ctrl+V)')
-      } else {
+      } else if (blob) {
         const cleanSupervisor = (group?.supervisor || 'STATEMENT').replace(/[^a-zA-Z0-9_-]/g, '_')
         const link = document.createElement('a')
         link.download = `Statement_${cleanSupervisor}_${selectedDate || 'report'}.png`
-        link.href = canvas.toDataURL('image/png')
+        link.href = dataUrl || URL.createObjectURL(blob)
         link.click()
         setCopyStatus('copied')
         setCopyToast('✓ Image downloaded as PNG!')
+      } else {
+        throw new Error('Image generation produced empty output')
       }
 
       setTimeout(() => {
@@ -250,6 +296,10 @@ export function CustomPrintBrowserModal({
         setCopyStatus('idle')
         setCopyToast('')
       }, 3500)
+    } finally {
+      if (viewportTransform) {
+        viewportTransform.style.transform = originalTransform
+      }
     }
   }
 
