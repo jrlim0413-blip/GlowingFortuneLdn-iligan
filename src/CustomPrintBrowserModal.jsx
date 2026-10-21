@@ -188,6 +188,9 @@ export function CustomPrintBrowserModal({
         viewportTransform.style.transform = 'none'
       }
 
+      document.body.classList.add('custom-print-capturing')
+      targetEl.classList.add('statement-print-exact-mode')
+
       if (document.fonts && document.fonts.ready) {
         await document.fonts.ready
       }
@@ -297,6 +300,10 @@ export function CustomPrintBrowserModal({
         setCopyToast('')
       }, 3500)
     } finally {
+      document.body.classList.remove('custom-print-capturing')
+      if (targetEl) {
+        targetEl.classList.remove('statement-print-exact-mode')
+      }
       if (viewportTransform) {
         viewportTransform.style.transform = originalTransform
       }

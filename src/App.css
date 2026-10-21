@@ -884,9 +884,10 @@ button { font: inherit; }
   font-weight: 600;
   color: #1e293b;
   font-size: 9.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow: visible;
+  text-overflow: unset;
   display: block;
   line-height: 1.35;
   padding: 1px 0;
@@ -2788,8 +2789,8 @@ button { font: inherit; }
   }
 
   
-  .statement-th-agent { width: 28% !important; text-align: left !important; }
-  .statement-th-num   { width: 14.4% !important; text-align: right !important; }
+  .statement-th-agent { width: 32% !important; text-align: left !important; }
+  .statement-th-num   { width: 13.6% !important; text-align: right !important; }
 
   .statement-section-divider-row {
     background: #f1f5f9 !important;
@@ -2818,33 +2819,31 @@ button { font: inherit; }
     print-color-adjust: exact !important;
   }
 
-  
   .statement-td {
-    padding: 1pt 2pt !important;
+    padding: 1.5pt 2.5pt !important;
     font-size: 7.8pt !important;
     color: #0f172a !important;
     border-bottom: 0.4pt solid #e2e8f0 !important;
-    line-height: 1.15 !important;
-    overflow: hidden !important;
-    text-overflow: clip !important;
-    white-space: nowrap !important;
+    line-height: 1.35 !important;
   }
 
   .statement-agent-td {
-    padding-left: 2pt !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: clip !important;
+    padding-left: 2.5pt !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
   }
 
   .statement-agent-name {
     font-weight: 600 !important;
     color: #0f172a !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: clip !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
     max-width: 100% !important;
-    display: inline-block !important;
+    display: block !important;
+    line-height: 1.35 !important;
   }
 
   .statement-num-td {
