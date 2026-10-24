@@ -869,3 +869,117 @@
   color: #94a3b8;
   font-style: italic;
 }
+
+/* ==========================================================================
+   Coordinator / Admin Commission Split Enhancements
+   ========================================================================== */
+
+.spvr-coor-active-chip {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #d8b4fe;
+  font: 700 11px -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'DM Sans', sans-serif;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.spvr-coor-rate-badge {
+  border-color: #e9d5ff;
+  background: #faf5ff;
+}
+
+.spvr-coor-rate-badge .rate-badge-label {
+  color: #7e22ce;
+}
+
+.preset-chip-coor.active {
+  background: #7e22ce;
+  border-color: #7e22ce;
+  color: #ffffff;
+}
+
+.preset-chip-coor:hover {
+  border-color: #c084fc;
+  color: #6b21a8;
+}
+
+.rate-column-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rate-toggle-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill-override-coor {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #d8b4fe;
+  box-shadow: 0 0 0 1px #a855f7;
+}
+
+.pill-coor-active {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.ios-switch-cell.is-granted-coor .ios-switch-track {
+  background: #7e22ce;
+}
+
+.custom-override-coor-wrap .override-coor-input {
+  border-color: #a855f7;
+  color: #6b21a8;
+  background: #faf5ff;
+}
+
+.custom-override-coor-wrap .override-coor-input:focus {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25);
+}
+
+.input-pct-label.coor-pct {
+  color: #7e22ce;
+}
+
+.comm-breakdown-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 170px;
+}
+
+.comm-breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.comm-share-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.comm-share-val {
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.comm-breakdown-total {
+  margin-top: 2px;
+  padding-top: 3px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.comm-breakdown-total .comm-share-label {
+  color: #334155;
+  font-weight: 700;
+}

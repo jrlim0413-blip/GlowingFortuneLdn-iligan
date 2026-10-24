@@ -384,8 +384,9 @@ function getSupervisorReports(rows, supervisorRows = [], commissionSettings = nu
     let groupSalary = 0
     const agents = Array.from(group.agents.values()).map((agent) => {
       const rateInfo = getAgentCommissionRate(group.supervisor, agent.key, commissionSettings)
-      const commissionRate = rateInfo.rate / 100
-      const totalSalary = agent.totalGross * commissionRate
+      const agentSalary = agent.totalGross * (rateInfo.rate / 100)
+      const coordinatorSalary = agent.totalGross * (rateInfo.coordinatorRate / 100)
+      const totalSalary = agentSalary + coordinatorSalary
       const totalNet = agent.totalGross - agent.totalHits
       const totalKabig = totalNet - totalSalary
       groupSalary += totalSalary
@@ -394,7 +395,13 @@ function getSupervisorReports(rows, supervisorRows = [], commissionSettings = nu
         ...agent,
         commissionRate: rateInfo.rate,
         isCommissionOverride: rateInfo.isOverride,
+        coordinatorRate: rateInfo.coordinatorRate,
+        isCoordinatorOverride: rateInfo.isCoordinatorOverride,
+        totalCommissionRate: rateInfo.totalRate,
         supervisorDefaultRate: rateInfo.supervisorDefault,
+        supervisorCoordinatorDefaultRate: rateInfo.supervisorCoordinatorDefault,
+        agentSalary,
+        coordinatorSalary,
         totalNet,
         totalSalary,
         totalKabig,
@@ -597,8 +604,17 @@ function MatrixTable({ group, showOverall = false }) {
                 })}
                 <td className="draw-cell draw-commission">
                   <strong>{formatAmount(agentOverallCommission)}</strong>
-                  {agent.commissionRate && (
-                    <small style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>({agent.commissionRate}%)</small>
+                  {agent.coordinatorRate > 0 ? (
+                    <small
+                      style={{ display: 'block', fontSize: '9.5px', color: '#64748b', whiteSpace: 'nowrap' }}
+                      title={`Agent: ₱${formatAmount(agent.agentSalary || 0)} (${agent.commissionRate}%) | Admin/Coor: ₱${formatAmount(agent.coordinatorSalary || 0)} (${agent.coordinatorRate}%)`}
+                    >
+                      Agt {agent.commissionRate}% | Coor {agent.coordinatorRate}%
+                    </small>
+                  ) : (
+                    agent.commissionRate !== undefined && (
+                      <small style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>({agent.commissionRate}%)</small>
+                    )
                   )}
                 </td>
                 <td className={`draw-cell draw-net-sales ${agentThirdNetSales < 0 ? 'negative-value' : ''}`}><strong>{formatAmount(agentThirdNetSales)}</strong></td>
@@ -609,8 +625,17 @@ function MatrixTable({ group, showOverall = false }) {
                     <td className="draw-cell draw-overall"><strong>{formatAmount(agent.totalHits)}</strong></td>
                     <td className="draw-cell draw-overall">
                       <strong>{formatAmount(agentOverallCommission)}</strong>
-                      {agent.commissionRate && (
-                        <small style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>({agent.commissionRate}%)</small>
+                      {agent.coordinatorRate > 0 ? (
+                        <small
+                          style={{ display: 'block', fontSize: '9.5px', color: '#64748b', whiteSpace: 'nowrap' }}
+                          title={`Agent: ₱${formatAmount(agent.agentSalary || 0)} (${agent.commissionRate}%) | Admin/Coor: ₱${formatAmount(agent.coordinatorSalary || 0)} (${agent.coordinatorRate}%)`}
+                        >
+                          Agt {agent.commissionRate}% | Coor {agent.coordinatorRate}%
+                        </small>
+                      ) : (
+                        agent.commissionRate !== undefined && (
+                          <small style={{ display: 'block', fontSize: '10px', color: '#64748b' }}>({agent.commissionRate}%)</small>
+                        )
                       )}
                     </td>
                     <td className="draw-cell draw-overall net-cell"><strong>{formatAmount(agentOverallNet)}</strong></td>

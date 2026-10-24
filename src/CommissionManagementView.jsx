@@ -4,8 +4,11 @@ import {
   saveCommissionSettings,
   getAgentCommissionRate,
   updateSupervisorDefaultRate,
+  updateSupervisorCoordinatorRate,
   setAgentOverride,
+  setAgentCoordinatorOverride,
   removeAgentOverride,
+  removeAgentCoordinatorOverride,
   resetSupervisorOverrides,
 } from './commissions'
 import { isSupabaseConfigured, syncCommissionSettingsFromSupabase } from './supabase'
@@ -136,6 +139,8 @@ export default function CommissionManagementView({
   const [filterMode, setFilterMode] = useState('all') 
   const [editingSpvrKey, setEditingSpvrKey] = useState(null)
   const [tempSpvrRate, setTempSpvrRate] = useState('')
+  const [editingSpvrCoorKey, setEditingSpvrCoorKey] = useState(null)
+  const [tempSpvrCoorRate, setTempSpvrCoorRate] = useState('')
   const [feedbackToast, setFeedbackToast] = useState(null)
   const [expandedSupervisors, setExpandedSupervisors] = useState({})
 
@@ -192,6 +197,23 @@ export default function CommissionManagementView({
     showToast(`Updated default agent commission for "${spvrName}" to ${val.toFixed(1)}%.`)
   }
 
+  const handleSaveSupervisorCoordinatorRate = (spvrName, newRate) => {
+    if (!canEdit) {
+      showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
+      return
+    }
+    const val = parseFloat(newRate)
+    if (isNaN(val) || val < 0 || val > 100) {
+      showToast('Please enter a valid percentage between 0% and 100%.', 'error')
+      return
+    }
+    const updated = updateSupervisorCoordinatorRate(spvrName, val, settings)
+    setSettings(updated)
+    setEditingSpvrCoorKey(null)
+    onRatesUpdated(updated)
+    showToast(`Updated default admin/coordinator commission for "${spvrName}" to ${val.toFixed(1)}%.`)
+  }
+
   const handleToggleAgentOverride = (spvrName, agentKey, currentRateInfo) => {
     if (!canEdit) {
       showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
@@ -222,6 +244,36 @@ export default function CommissionManagementView({
     onRatesUpdated(updated)
   }
 
+  const handleToggleCoordinatorOverride = (spvrName, agentKey, currentRateInfo) => {
+    if (!canEdit) {
+      showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
+      return
+    }
+    if (currentRateInfo.isCoordinatorOverride) {
+      const updated = removeAgentCoordinatorOverride(spvrName, agentKey, settings)
+      setSettings(updated)
+      onRatesUpdated(updated)
+      showToast(`Reverted coordinator share for agent "${agentKey}" to Supervisor Default (${currentRateInfo.supervisorCoordinatorDefault.toFixed(1)}%).`)
+    } else {
+      const updated = setAgentCoordinatorOverride(spvrName, agentKey, currentRateInfo.coordinatorRate, settings)
+      setSettings(updated)
+      onRatesUpdated(updated)
+      showToast(`Custom coordinator override enabled for agent "${agentKey}" at ${currentRateInfo.coordinatorRate.toFixed(1)}%.`)
+    }
+  }
+
+  const handleChangeCoordinatorOverrideRate = (spvrName, agentKey, newRate) => {
+    if (!canEdit) {
+      showToast('Action Denied: You do not have permission to modify commission rates.', 'error')
+      return
+    }
+    const val = parseFloat(newRate)
+    if (isNaN(val) || val < 0 || val > 100) return
+    const updated = setAgentCoordinatorOverride(spvrName, agentKey, val, settings)
+    setSettings(updated)
+    onRatesUpdated(updated)
+  }
+
   const [pendingResetSupervisor, setPendingResetSupervisor] = useState(null)
   const [isResettingSupervisor, setIsResettingSupervisor] = useState(false)
 
@@ -241,7 +293,7 @@ export default function CommissionManagementView({
     onRatesUpdated(updated)
     await saveCommissionSettings(updated)
     setIsResettingSupervisor(false)
-    showToast(`All agent overrides under "${pendingResetSupervisor}" reset to supervisor default.`)
+    showToast(`All agent & coordinator overrides under "${pendingResetSupervisor}" reset to supervisor defaults.`)
     setPendingResetSupervisor(null)
   }
 
@@ -254,7 +306,9 @@ export default function CommissionManagementView({
 
   const stats = useMemo(() => {
     let totalAgents = 0
-    let totalOverrides = 0
+    let totalAgentOverrides = 0
+    let totalCoorOverrides = 0
+    let totalWithCoordinatorShare = 0
     const spvrCount = supervisors.length
 
     supervisors.forEach((s) => {
@@ -262,15 +316,21 @@ export default function CommissionManagementView({
       totalAgents += agts.length
       agts.forEach((a) => {
         const rateInfo = getAgentCommissionRate(s.supervisor, a.key, settings)
-        if (rateInfo.isOverride) totalOverrides++
+        if (rateInfo.isOverride) totalAgentOverrides++
+        if (rateInfo.isCoordinatorOverride) totalCoorOverrides++
+        if (rateInfo.coordinatorRate > 0) totalWithCoordinatorShare++
       })
     })
 
     return {
       totalSupervisors: spvrCount,
       totalAgents,
-      totalOverrides,
+      totalOverrides: totalAgentOverrides + totalCoorOverrides,
+      totalAgentOverrides,
+      totalCoorOverrides,
+      totalWithCoordinatorShare,
       globalBaseRate: settings.globalDefaultRate || 10.0,
+      globalBaseCoorRate: settings.globalCoordinatorRate || 0.0,
     }
   }, [supervisors, settings])
 
@@ -286,15 +346,23 @@ export default function CommissionManagementView({
       if (filterMode === 'overrides') {
         const hasOverrides = (s.agents || []).some((a) => {
           const r = getAgentCommissionRate(s.supervisor, a.key, settings)
-          return r.isOverride
+          return r.isOverride || r.isCoordinatorOverride
         })
         return hasOverrides
+      }
+
+      if (filterMode === 'coordinators') {
+        const hasCoor = (s.agents || []).some((a) => {
+          const r = getAgentCommissionRate(s.supervisor, a.key, settings)
+          return r.coordinatorRate > 0
+        })
+        return hasCoor
       }
 
       if (filterMode === 'defaults') {
         const hasNoOverrides = (s.agents || []).every((a) => {
           const r = getAgentCommissionRate(s.supervisor, a.key, settings)
-          return !r.isOverride
+          return !r.isOverride && !r.isCoordinatorOverride
         })
         return hasNoOverrides
       }
@@ -304,10 +372,11 @@ export default function CommissionManagementView({
   }, [supervisors, searchQuery, filterMode, settings])
 
   const presets = [8.0, 10.0, 12.0, 14.0, 15.0]
+  const coordinatorPresets = [0.0, 1.0, 2.0, 2.5, 3.0, 5.0]
 
   return (
     <div className="commissions-dashboard-container">
-      {}
+      {/* Toast notification */}
       {feedbackToast && (
         <div className={`commissions-toast toast-${feedbackToast.type}`}>
           <SvgIcon name={feedbackToast.type === 'error' ? 'alertCircle' : 'check'} size={15} />
@@ -315,7 +384,7 @@ export default function CommissionManagementView({
         </div>
       )}
 
-      {}
+      {/* Header Banner */}
       <div className="commissions-header-banner">
         <div className="header-banner-left">
           <div className="banner-icon-chip">
@@ -323,12 +392,12 @@ export default function CommissionManagementView({
           </div>
           <div>
             <div className="banner-title-row">
-              <h1 className="banner-title">Agent Commission Rates &amp; Overrides</h1>
-              <span className="banner-badge">Hierarchical Rate Engine</span>
+              <h1 className="banner-title">Commission Rates &amp; Coordinator Splits</h1>
+              <span className="banner-badge">Split Engine</span>
             </div>
             <p className="banner-subtitle">
-              Configure baseline agent commission rates per supervisor, or toggle custom overrides for individual agents.
-              All modifications automatically reflect on draw reports and printed remittance statements.
+              Configure baseline commission rates and coordinator/admin shares per supervisor, or toggle custom overrides for individual agents.
+              Supports commission sharing between agents and office coordinators/admins.
             </p>
           </div>
         </div>
@@ -369,7 +438,7 @@ export default function CommissionManagementView({
         </div>
       </div>
 
-      {}
+      {/* Stats Cards */}
       <div className="commissions-stats-grid">
         <div className="stat-card">
           <div className="stat-icon-wrap icon-primary">
@@ -398,9 +467,9 @@ export default function CommissionManagementView({
             <SvgIcon name="zap" size={18} />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Custom Agent Overrides</span>
+            <span className="stat-label">Custom Overrides</span>
             <strong className="stat-value stat-highlight">{stats.totalOverrides}</strong>
-            <span className="stat-desc">Special commission rules active</span>
+            <span className="stat-desc">{stats.totalAgentOverrides} Agent | {stats.totalCoorOverrides} Coor overrides</span>
           </div>
         </div>
 
@@ -409,20 +478,20 @@ export default function CommissionManagementView({
             <SvgIcon name="percent" size={18} />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Default Baseline Rate</span>
-            <strong className="stat-value">{stats.globalBaseRate.toFixed(1)}%</strong>
-            <span className="stat-desc">Standard corporate commission</span>
+            <span className="stat-label">Agents with Coordinator Cut</span>
+            <strong className="stat-value">{stats.totalWithCoordinatorShare}</strong>
+            <span className="stat-desc">Commission split active</span>
           </div>
         </div>
       </div>
 
-      {}
+      {/* Interactive Simulator */}
       {showCalculator && (
         <div className="commission-calculator-panel">
           <div className="calculator-header">
             <div className="calc-title">
               <SvgIcon name="calculator" size={18} />
-              <span>Real-Time Payout Simulator</span>
+              <span>Real-Time Commission Split Simulator</span>
             </div>
             <button
               type="button"
@@ -471,7 +540,7 @@ export default function CommissionManagementView({
                   onChange={(e) => setCalcAgent(e.target.value)}
                   disabled={!calcSpvr}
                 >
-                  <option value="">-- Inherit Supervisor Default --</option>
+                  <option value="">-- Inherit Supervisor Defaults --</option>
                   {(supervisors.find((s) => s.supervisor === calcSpvr)?.agents || []).map((a) => (
                     <option key={a.key} value={a.key}>
                       {a.teller} ({a.key})
@@ -481,13 +550,14 @@ export default function CommissionManagementView({
               </div>
             </div>
 
-            {}
             {calcSpvr && (
               <div className="calc-result-box">
                 {(() => {
                   const rateInfo = getAgentCommissionRate(calcSpvr, calcAgent || 'UNKNOWN', settings)
-                  const commAmount = calcGross * (rateInfo.rate / 100)
-                  const netRemit = calcGross - commAmount
+                  const agentCommAmount = calcGross * (rateInfo.rate / 100)
+                  const coorCommAmount = calcGross * (rateInfo.coordinatorRate / 100)
+                  const totalCommAmount = agentCommAmount + coorCommAmount
+                  const netRemit = calcGross - totalCommAmount
 
                   return (
                     <div className="calc-result-grid">
@@ -496,18 +566,20 @@ export default function CommissionManagementView({
                         <strong className="res-val">₱ {formatAmount(calcGross)}</strong>
                       </div>
                       <div className="result-metric">
-                        <span className="res-label">Effective Rate</span>
-                        <strong className="res-val val-emerald">
-                          {rateInfo.rate.toFixed(1)}% {rateInfo.isOverride ? '(Custom Override)' : '(Inherited Default)'}
-                        </strong>
+                        <span className="res-label">Agent Share ({rateInfo.rate.toFixed(1)}%)</span>
+                        <strong className="res-val val-blue">₱ {formatAmount(agentCommAmount)}</strong>
                       </div>
                       <div className="result-metric">
-                        <span className="res-label">Agent Commission</span>
-                        <strong className="res-val val-blue">₱ {formatAmount(commAmount)}</strong>
+                        <span className="res-label">Admin/Coor Share ({rateInfo.coordinatorRate.toFixed(1)}%)</span>
+                        <strong className="res-val val-purple">₱ {formatAmount(coorCommAmount)}</strong>
+                      </div>
+                      <div className="result-metric">
+                        <span className="res-label">Total Commission ({rateInfo.totalRate.toFixed(1)}%)</span>
+                        <strong className="res-val val-emerald">₱ {formatAmount(totalCommAmount)}</strong>
                       </div>
                       <div className="result-metric">
                         <span className="res-label">Net Remittance Due</span>
-                        <strong className="res-val val-purple">₱ {formatAmount(netRemit)}</strong>
+                        <strong className="res-val val-dark">₱ {formatAmount(netRemit)}</strong>
                       </div>
                     </div>
                   )
@@ -518,7 +590,7 @@ export default function CommissionManagementView({
         </div>
       )}
 
-      {}
+      {/* Toolbar */}
       <div className="commissions-toolbar">
         <div className="search-box">
           <SvgIcon name="search" size={15} className="search-icon" />
@@ -556,6 +628,13 @@ export default function CommissionManagementView({
           </button>
           <button
             type="button"
+            className={`filter-btn ${filterMode === 'coordinators' ? 'active' : ''}`}
+            onClick={() => setFilterMode('coordinators')}
+          >
+            Has Coordinator Split ({stats.totalWithCoordinatorShare})
+          </button>
+          <button
+            type="button"
             className={`filter-btn ${filterMode === 'defaults' ? 'active' : ''}`}
             onClick={() => setFilterMode('defaults')}
           >
@@ -564,7 +643,7 @@ export default function CommissionManagementView({
         </div>
       </div>
 
-      {}
+      {/* Supervisors Accordion List */}
       <div className="supervisors-accordion-list">
         {filteredSupervisors.length === 0 ? (
           <div className="empty-state-card">
@@ -581,18 +660,23 @@ export default function CommissionManagementView({
               ? Number(spvrConfig.defaultRate)
               : (settings.globalDefaultRate || 10.0)
 
+            const currentDefaultCoordinatorRate = spvrConfig?.defaultCoordinatorRate !== undefined
+              ? Number(spvrConfig.defaultCoordinatorRate)
+              : (settings.globalCoordinatorRate || 0.0)
+
             const isExpanded = Boolean(expandedSupervisors[spvrKey])
             const agentsList = spvr.agents || []
             const activeOverridesCount = agentsList.filter((a) => {
               const r = getAgentCommissionRate(spvrKey, a.key, settings)
-              return r.isOverride
+              return r.isOverride || r.isCoordinatorOverride
             }).length
 
-            const isEditing = editingSpvrKey === spvrKey
+            const isEditingAgentRate = editingSpvrKey === spvrKey
+            const isEditingCoorRate = editingSpvrCoorKey === spvrKey
 
             return (
               <div key={spvrKey} className={`supervisor-commission-card ${isExpanded ? 'is-expanded' : ''}`}>
-                {}
+                {/* Supervisor Header */}
                 <div className="spvr-card-header">
                   <div className="spvr-info-cluster" onClick={() => toggleSupervisorExpanded(spvrKey)}>
                     <button
@@ -613,6 +697,11 @@ export default function CommissionManagementView({
                             ⚡ {activeOverridesCount} Custom {activeOverridesCount === 1 ? 'Override' : 'Overrides'}
                           </span>
                         )}
+                        {currentDefaultCoordinatorRate > 0 && (
+                          <span className="spvr-coor-active-chip" title="Coordinator cut active by default">
+                            👥 Coor: {currentDefaultCoordinatorRate.toFixed(1)}%
+                          </span>
+                        )}
                       </div>
                       <div className="spvr-summary-metrics">
                         <span>Total Gross: <strong>₱ {formatAmount(spvr.totalGross)}</strong></span>
@@ -622,11 +711,12 @@ export default function CommissionManagementView({
                     </div>
                   </div>
 
-                  {}
+                  {/* Rate Controls Cluster */}
                   <div className="spvr-rate-control-cluster">
+                    {/* Default Agent Commission Rate */}
                     <div className="spvr-default-rate-badge">
-                      <span className="rate-badge-label">Default Agent Rate:</span>
-                      {isEditing ? (
+                      <span className="rate-badge-label">Agent Rate:</span>
+                      {isEditingAgentRate ? (
                         <div className="inline-rate-edit-wrap">
                           <input
                             type="number"
@@ -669,36 +759,104 @@ export default function CommissionManagementView({
                               }}
                               title="Edit supervisor default agent commission"
                             >
-                              Edit Rate
+                              Edit
                             </button>
                           )}
                         </div>
                       )}
+
+                      {canEdit && !isEditingAgentRate && (
+                        <div className="rate-presets-row">
+                          {presets.map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              className={`preset-chip ${Math.abs(currentDefaultRate - p) < 0.01 ? 'active' : ''}`}
+                              onClick={() => handleSaveSupervisorRate(spvrKey, p)}
+                              title={`Set agent commission to ${p}%`}
+                            >
+                              {p}%
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {}
-                    {canEdit && (
-                      <div className="rate-presets-row">
-                        {presets.map((p) => (
+                    {/* Default Admin / Coordinator Commission Rate */}
+                    <div className="spvr-default-rate-badge spvr-coor-rate-badge">
+                      <span className="rate-badge-label">Admin/Coor Rate:</span>
+                      {isEditingCoorRate ? (
+                        <div className="inline-rate-edit-wrap">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.5"
+                            className="inline-rate-input"
+                            value={tempSpvrCoorRate}
+                            onChange={(e) => setTempSpvrCoorRate(e.target.value)}
+                            autoFocus
+                          />
+                          <span className="input-pct">%</span>
                           <button
-                            key={p}
                             type="button"
-                            className={`preset-chip ${Math.abs(currentDefaultRate - p) < 0.01 ? 'active' : ''}`}
-                            onClick={() => handleSaveSupervisorRate(spvrKey, p)}
-                            title={`Set default agent commission to ${p}%`}
+                            className="inline-save-btn"
+                            onClick={() => handleSaveSupervisorCoordinatorRate(spvrKey, tempSpvrCoorRate)}
+                            title="Save coordinator rate"
                           >
-                            {p}%
+                            <SvgIcon name="check" size={13} />
                           </button>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            type="button"
+                            className="inline-cancel-btn"
+                            onClick={() => setEditingSpvrCoorKey(null)}
+                            title="Cancel"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="rate-display-cluster">
+                          <strong className="rate-value-display val-purple">{currentDefaultCoordinatorRate.toFixed(1)}%</strong>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="edit-rate-trigger-btn"
+                              onClick={() => {
+                                setEditingSpvrCoorKey(spvrKey)
+                                setTempSpvrCoorRate(currentDefaultCoordinatorRate.toString())
+                              }}
+                              title="Edit supervisor default coordinator commission"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {canEdit && !isEditingCoorRate && (
+                        <div className="rate-presets-row">
+                          {coordinatorPresets.map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              className={`preset-chip preset-chip-coor ${Math.abs(currentDefaultCoordinatorRate - p) < 0.01 ? 'active' : ''}`}
+                              onClick={() => handleSaveSupervisorCoordinatorRate(spvrKey, p)}
+                              title={`Set coordinator commission to ${p}%`}
+                            >
+                              {p}%
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     {activeOverridesCount > 0 && canEdit && (
                       <button
                         type="button"
                         className="reset-spvr-overrides-btn"
                         onClick={() => handleResetSupervisorOverrides(spvrKey)}
-                        title="Revert all agents under this supervisor to the default rate"
+                        title="Revert all agents and coordinator rates under this supervisor to defaults"
                       >
                         Reset All Overrides
                       </button>
@@ -706,24 +864,23 @@ export default function CommissionManagementView({
                   </div>
                 </div>
 
-                {}
+                {/* Agents Table */}
                 {isExpanded && (
                   <div className="spvr-agents-table-wrap">
                     <table className="spvr-agents-table">
                       <thead>
                         <tr>
                           <th className="col-agent">Agent / Terminal Staff</th>
-                          <th className="col-effective-rate">Effective Commission Rate</th>
-                          <th className="col-override-toggle">Override Status (iOS Switch)</th>
-                          <th className="col-custom-input">Custom Override (%)</th>
+                          <th className="col-agent-rate">Agent Commission Rate</th>
+                          <th className="col-coor-rate">Admin / Coordinator Rate</th>
                           <th className="col-live-gross">Today's Gross Sales</th>
-                          <th className="col-live-payout">Calculated Agent Commission</th>
+                          <th className="col-live-breakdown">Commission Split Breakdown</th>
                         </tr>
                       </thead>
                       <tbody>
                         {agentsList.length === 0 ? (
                           <tr>
-                            <td colSpan="6" className="table-empty-cell">
+                            <td colSpan="5" className="table-empty-cell">
                               No agents recorded under this supervisor for the selected date.
                             </td>
                           </tr>
@@ -731,12 +888,14 @@ export default function CommissionManagementView({
                           agentsList.map((agent) => {
                             const rateInfo = getAgentCommissionRate(spvrKey, agent.key, settings)
                             const agentGross = agent.totalGross || 0
-                            const calculatedCommission = agentGross * (rateInfo.rate / 100)
+                            const agentComm = agentGross * (rateInfo.rate / 100)
+                            const coorComm = agentGross * (rateInfo.coordinatorRate / 100)
+                            const totalComm = agentComm + coorComm
 
                             return (
                               <tr
                                 key={agent.key}
-                                className={`agent-rate-row ${rateInfo.isOverride ? 'has-override-row' : ''}`}
+                                className={`agent-rate-row ${(rateInfo.isOverride || rateInfo.isCoordinatorOverride) ? 'has-override-row' : ''}`}
                               >
                                 <td className="col-agent">
                                   <div className="agent-name-cell">
@@ -745,91 +904,171 @@ export default function CommissionManagementView({
                                   </div>
                                 </td>
 
-                                <td className="col-effective-rate">
-                                  <div className="effective-rate-pill-wrap">
-                                    <span className={`effective-rate-pill ${rateInfo.isOverride ? 'pill-override' : 'pill-inherited'}`}>
-                                      {rateInfo.rate.toFixed(1)}%
-                                    </span>
-                                    <small className="rate-origin-hint">
-                                      {rateInfo.isOverride
-                                        ? `⚡ Custom Override`
-                                        : `Inherited (${rateInfo.supervisorDefault.toFixed(1)}% Default)`}
-                                    </small>
+                                {/* Agent Commission Column (Pill + iOS Toggle + Custom Input) */}
+                                <td className="col-agent-rate">
+                                  <div className="rate-column-cell-content">
+                                    <div className="effective-rate-pill-wrap">
+                                      <span className={`effective-rate-pill ${rateInfo.isOverride ? 'pill-override' : 'pill-inherited'}`}>
+                                        {rateInfo.rate.toFixed(1)}%
+                                      </span>
+                                      <small className="rate-origin-hint">
+                                        {rateInfo.isOverride ? `⚡ Custom Override` : `Inherited (${rateInfo.supervisorDefault.toFixed(1)}%)`}
+                                      </small>
+                                    </div>
+
+                                    <div className="rate-toggle-input-row">
+                                      <label
+                                        className={`ios-switch-cell ${rateInfo.isOverride ? 'is-granted' : 'is-denied'}`}
+                                        title={
+                                          canEdit
+                                            ? (rateInfo.isOverride
+                                              ? `Click to remove override and revert to Supervisor Default (${rateInfo.supervisorDefault.toFixed(1)}%)`
+                                              : `Click to set a custom commission override for ${agent.teller}`)
+                                            : 'Permission denied'
+                                        }
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="ios-switch-input"
+                                          checked={rateInfo.isOverride}
+                                          disabled={!canEdit}
+                                          onChange={() => handleToggleAgentOverride(spvrKey, agent.key, rateInfo)}
+                                        />
+                                        <span className="ios-switch-control">
+                                          <span className="ios-switch-track">
+                                            <span className="ios-switch-thumb" />
+                                          </span>
+                                          <span className="ios-switch-state-text">
+                                            {rateInfo.isOverride ? 'CUSTOM' : 'DEFAULT'}
+                                          </span>
+                                        </span>
+                                      </label>
+
+                                      {rateInfo.isOverride && (
+                                        <div className="custom-override-input-wrap">
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.5"
+                                            className="override-number-input"
+                                            value={rateInfo.rate}
+                                            disabled={!canEdit}
+                                            onChange={(e) =>
+                                              handleChangeAgentOverrideRate(spvrKey, agent.key, e.target.value)
+                                            }
+                                          />
+                                          <span className="input-pct-label">%</span>
+                                          {canEdit && (
+                                            <button
+                                              type="button"
+                                              className="revert-override-btn"
+                                              onClick={() => removeAgentOverride(spvrKey, agent.key, settings)}
+                                              title="Revert to Supervisor Default"
+                                            >
+                                              Revert
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
 
-                                <td className="col-override-toggle">
-                                  {}
-                                  <label
-                                    className={`ios-switch-cell ${rateInfo.isOverride ? 'is-granted' : 'is-denied'}`}
-                                    title={
-                                      canEdit
-                                        ? (rateInfo.isOverride
-                                          ? `Click to remove override and revert to Supervisor Default (${rateInfo.supervisorDefault.toFixed(1)}%)`
-                                          : `Click to set a custom commission override for ${agent.teller}`)
-                                        : 'You do not have permission to modify commissions'
-                                    }
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      className="ios-switch-input"
-                                      checked={rateInfo.isOverride}
-                                      disabled={!canEdit}
-                                      onChange={() => handleToggleAgentOverride(spvrKey, agent.key, rateInfo)}
-                                    />
-                                    <span className="ios-switch-control">
-                                      <span className="ios-switch-track">
-                                        <span className="ios-switch-thumb" />
+                                {/* Admin / Coordinator Commission Column (Pill + iOS Toggle + Custom Input) */}
+                                <td className="col-coor-rate">
+                                  <div className="rate-column-cell-content">
+                                    <div className="effective-rate-pill-wrap">
+                                      <span className={`effective-rate-pill ${rateInfo.isCoordinatorOverride ? 'pill-override-coor' : (rateInfo.coordinatorRate > 0 ? 'pill-coor-active' : 'pill-inherited')}`}>
+                                        {rateInfo.coordinatorRate.toFixed(1)}%
                                       </span>
-                                      <span className="ios-switch-state-text">
-                                        {rateInfo.isOverride ? 'CUSTOM' : 'DEFAULT'}
-                                      </span>
-                                    </span>
-                                  </label>
-                                </td>
+                                      <small className="rate-origin-hint">
+                                        {rateInfo.isCoordinatorOverride
+                                          ? `⚡ Custom Override`
+                                          : `Inherited (${rateInfo.supervisorCoordinatorDefault.toFixed(1)}%)`}
+                                      </small>
+                                    </div>
 
-                                <td className="col-custom-input">
-                                  {rateInfo.isOverride ? (
-                                    <div className="custom-override-input-wrap">
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        step="0.5"
-                                        className="override-number-input"
-                                        value={rateInfo.rate}
-                                        disabled={!canEdit}
-                                        onChange={(e) =>
-                                          handleChangeAgentOverrideRate(spvrKey, agent.key, e.target.value)
+                                    <div className="rate-toggle-input-row">
+                                      <label
+                                        className={`ios-switch-cell ${rateInfo.isCoordinatorOverride ? 'is-granted-coor' : 'is-denied'}`}
+                                        title={
+                                          canEdit
+                                            ? (rateInfo.isCoordinatorOverride
+                                              ? `Click to revert coordinator share to Supervisor Default (${rateInfo.supervisorCoordinatorDefault.toFixed(1)}%)`
+                                              : `Click to set a custom coordinator cut for ${agent.teller}`)
+                                            : 'Permission denied'
                                         }
-                                      />
-                                      <span className="input-pct-label">%</span>
-                                      {canEdit && (
-                                        <button
-                                          type="button"
-                                          className="revert-override-btn"
-                                          onClick={() => removeAgentOverride(spvrKey, agent.key, settings)}
-                                          title="Revert to Supervisor Default"
-                                        >
-                                          Revert
-                                        </button>
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="ios-switch-input"
+                                          checked={rateInfo.isCoordinatorOverride}
+                                          disabled={!canEdit}
+                                          onChange={() => handleToggleCoordinatorOverride(spvrKey, agent.key, rateInfo)}
+                                        />
+                                        <span className="ios-switch-control">
+                                          <span className="ios-switch-track">
+                                            <span className="ios-switch-thumb" />
+                                          </span>
+                                          <span className="ios-switch-state-text">
+                                            {rateInfo.isCoordinatorOverride ? 'CUSTOM' : 'DEFAULT'}
+                                          </span>
+                                        </span>
+                                      </label>
+
+                                      {rateInfo.isCoordinatorOverride && (
+                                        <div className="custom-override-input-wrap custom-override-coor-wrap">
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.5"
+                                            className="override-number-input override-coor-input"
+                                            value={rateInfo.coordinatorRate}
+                                            disabled={!canEdit}
+                                            onChange={(e) =>
+                                              handleChangeCoordinatorOverrideRate(spvrKey, agent.key, e.target.value)
+                                            }
+                                          />
+                                          <span className="input-pct-label coor-pct">%</span>
+                                          {canEdit && (
+                                            <button
+                                              type="button"
+                                              className="revert-override-btn"
+                                              onClick={() => removeAgentCoordinatorOverride(spvrKey, agent.key, settings)}
+                                              title="Revert to Supervisor Default"
+                                            >
+                                              Revert
+                                            </button>
+                                          )}
+                                        </div>
                                       )}
                                     </div>
-                                  ) : (
-                                    <span className="locked-default-hint">
-                                      Inheriting {currentDefaultRate.toFixed(1)}%
-                                    </span>
-                                  )}
+                                  </div>
                                 </td>
 
                                 <td className="col-live-gross">
                                   <span className="amount-num">₱ {formatAmount(agentGross)}</span>
                                 </td>
 
-                                <td className="col-live-payout">
-                                  <strong className="amount-commission-num">
-                                    ₱ {formatAmount(calculatedCommission)}
-                                  </strong>
+                                <td className="col-live-breakdown">
+                                  <div className="comm-breakdown-cluster">
+                                    <div className="comm-breakdown-row">
+                                      <span className="comm-share-label">Agent ({rateInfo.rate.toFixed(1)}%):</span>
+                                      <strong className="comm-share-val val-blue">₱ {formatAmount(agentComm)}</strong>
+                                    </div>
+                                    {rateInfo.coordinatorRate > 0 && (
+                                      <div className="comm-breakdown-row">
+                                        <span className="comm-share-label">Admin/Coor ({rateInfo.coordinatorRate.toFixed(1)}%):</span>
+                                        <strong className="comm-share-val val-purple">₱ {formatAmount(coorComm)}</strong>
+                                      </div>
+                                    )}
+                                    <div className="comm-breakdown-row comm-breakdown-total">
+                                      <span className="comm-share-label">Total Comm ({rateInfo.totalRate.toFixed(1)}%):</span>
+                                      <strong className="comm-share-val val-emerald">₱ {formatAmount(totalComm)}</strong>
+                                    </div>
+                                  </div>
                                 </td>
                               </tr>
                             )
@@ -845,11 +1084,11 @@ export default function CommissionManagementView({
         )}
       </div>
 
-      {}
+      {/* Confirmation Modal */}
       <ConfirmActionModal
         isOpen={Boolean(pendingResetSupervisor)}
-        title="Reset Agent Overrides?"
-        message={`Are you sure you want to reset all custom agent commission overrides under supervisor "${pendingResetSupervisor}" back to default rate?`}
+        title="Reset Agent & Coordinator Overrides?"
+        message={`Are you sure you want to reset all custom agent and coordinator commission overrides under supervisor "${pendingResetSupervisor}" back to default rates?`}
         details={
           <div>
             <div className="confirm-detail-row">
@@ -864,7 +1103,7 @@ export default function CommissionManagementView({
         isProcessing={isResettingSupervisor}
         processingText="Resetting Overrides..."
         onConfirm={handleConfirmResetSupervisor}
-        onCancel={() => !isResettingSupervisor && setPendingResetSupervisor(null)}
+        onCancel={() => setPendingResetSupervisor(null)}
       />
     </div>
   )
