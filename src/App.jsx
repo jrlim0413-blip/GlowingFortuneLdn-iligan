@@ -687,10 +687,26 @@ function MatrixTable({ group, showOverall = false }) {
 function getAgentOverallMetrics(agent) {
   const gross = Number(agent.totalGross) || 0
   const hits = Number(agent.totalHits) || 0
-  const commission = agent.totalSalary !== undefined ? Number(agent.totalSalary) : gross * 0.1
+  const agentSalary = agent.agentSalary !== undefined
+    ? Number(agent.agentSalary)
+    : (agent.totalSalary !== undefined ? Number(agent.totalSalary) : gross * ((agent.commissionRate || 10) / 100))
+  const coordinatorSalary = agent.coordinatorSalary !== undefined
+    ? Number(agent.coordinatorSalary)
+    : (agent.coordinatorRate ? gross * (Number(agent.coordinatorRate) / 100) : 0)
+  const commission = agent.totalSalary !== undefined ? Number(agent.totalSalary) : (agentSalary + coordinatorSalary)
   const net = gross - hits
   const netSales = net - commission
-  return { gross, hits, commission, net, netSales }
+  return {
+    gross,
+    hits,
+    commission,
+    agentSalary,
+    coordinatorSalary,
+    commissionRate: agent.commissionRate,
+    coordinatorRate: agent.coordinatorRate || 0,
+    net,
+    netSales,
+  }
 }
 
 function splitAgentsByRemittance(agents = []) {
@@ -715,10 +731,12 @@ function calculateMetricsTotals(list = []) {
       gross: acc.gross + item.gross,
       hits: acc.hits + item.hits,
       commission: acc.commission + item.commission,
+      agentSalary: acc.agentSalary + (item.agentSalary || 0),
+      coordinatorSalary: acc.coordinatorSalary + (item.coordinatorSalary || 0),
       net: acc.net + item.net,
       netSales: acc.netSales + item.netSales,
     }),
-    { gross: 0, hits: 0, commission: 0, net: 0, netSales: 0 }
+    { gross: 0, hits: 0, commission: 0, agentSalary: 0, coordinatorSalary: 0, net: 0, netSales: 0 }
   )
 }
 
@@ -757,6 +775,10 @@ function SupervisorStatementTable({
     net: positiveTotals.net + negativeTotals.net,
     netSales: positiveTotals.netSales + negativeTotals.netSales,
   }
+
+  const totalCoordinatorSalary = positiveTotals.coordinatorSalary + negativeTotals.coordinatorSalary
+  const totalAgentSalary = positiveTotals.agentSalary + negativeTotals.agentSalary
+  const hasCoordinatorRate = totalCoordinatorSalary > 0 || (group?.agents || []).some((a) => (a.coordinatorRate || 0) > 0)
 
   const sheetRef = useRef(null)
   const wrapRef  = useRef(null)
@@ -901,8 +923,14 @@ function SupervisorStatementTable({
                       <td className="statement-td statement-num-td">
                         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
                           <span>{formatAmount(agent.commission)}</span>
-                          {agent.commissionRate && (
-                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                          {agent.coordinatorRate > 0 ? (
+                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>
+                              ({agent.commissionRate}% + {agent.coordinatorRate}%)
+                            </span>
+                          ) : (
+                            agent.commissionRate && (
+                              <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                            )
                           )}
                         </div>
                       </td>
@@ -970,8 +998,14 @@ function SupervisorStatementTable({
                       <td className="statement-td statement-num-td">
                         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
                           <span>{formatAmount(agent.commission)}</span>
-                          {agent.commissionRate && (
-                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                          {agent.coordinatorRate > 0 ? (
+                            <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>
+                              ({agent.commissionRate}% + {agent.coordinatorRate}%)
+                            </span>
+                          ) : (
+                            agent.commissionRate && (
+                              <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>({agent.commissionRate}%)</span>
+                            )
                           )}
                         </div>
                       </td>
@@ -1035,6 +1069,43 @@ function SupervisorStatementTable({
                     <strong>{grandTotals.netSales < 0 ? `(${formatAmount(Math.abs(grandTotals.netSales))})` : formatAmount(grandTotals.netSales)}</strong>
                   </td>
                 </tr>
+
+                {hasCoordinatorRate && (
+                  <>
+                    <tr className="statement-spacer-divider-row" aria-hidden="true">
+                      <td colSpan={6} style={{ height: '4px', lineHeight: '4px', padding: 0, border: 'none', background: 'transparent' }}>&nbsp;</td>
+                    </tr>
+                    <tr className="statement-split-breakdown-row statement-split-agent-row">
+                      <td colSpan={5} className="statement-td statement-split-label-td">
+                        <span className="statement-subtotal-indent">• Total Agent Commission</span>
+                      </td>
+                      <td className="statement-td statement-split-num-td statement-remit-td">
+                        <span className="accounting-currency-symbol">₱</span>
+                        <strong>{formatAmount(totalAgentSalary)}</strong>
+                      </td>
+                    </tr>
+                    <tr className="statement-split-breakdown-row statement-split-coor-row">
+                      <td colSpan={5} className="statement-td statement-split-label-td">
+                        <span className="statement-subtotal-indent" style={{ color: '#7c3aed' }}>
+                          • Coordinator / Admin Share
+                        </span>
+                      </td>
+                      <td className="statement-td statement-split-num-td statement-remit-td" style={{ color: '#7c3aed' }}>
+                        <span className="accounting-currency-symbol" style={{ color: '#7c3aed' }}>₱</span>
+                        <strong>{formatAmount(totalCoordinatorSalary)}</strong>
+                      </td>
+                    </tr>
+                    <tr className="statement-split-breakdown-row statement-split-net-row">
+                      <td colSpan={5} className="statement-td statement-split-label-td">
+                        <strong style={{ color: '#0f172a' }}>• Net Remittance to Office</strong>
+                      </td>
+                      <td className={`statement-td statement-split-num-td statement-split-final-num statement-remit-td ${grandTotals.netSales < 0 ? 'accounting-deficit-text' : ''}`}>
+                        <span className="accounting-currency-symbol">₱</span>
+                        <strong>{grandTotals.netSales < 0 ? `(${formatAmount(Math.abs(grandTotals.netSales))})` : formatAmount(grandTotals.netSales)}</strong>
+                      </td>
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
           </div>
