@@ -3,7 +3,7 @@ import { saveSupabaseCommissionSettings } from './supabase.js'
 export const DEFAULT_COMMISSION_CONFIG = {
   globalDefaultRate: 10.0,
   globalCoordinatorRate: 0.0,
-  globalCoordinatorMode: 'per_agent', // 'per_agent' (Option 1: row COMM) | 'consolidated' (Option 2: bawas sa summary box)
+  globalCoordinatorMode: 'per_agent', // 'per_agent' (Option 1: row COMM) | 'consolidated' (Option 2: summary box deduction)
   supervisors: {},
 }
 

@@ -227,8 +227,8 @@ export default function CommissionManagementView({
     onRatesUpdated(updated)
     showToast(
       newMode === 'consolidated'
-        ? 'Global Mode: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box'
-        : 'Global Mode: Kasama sa COMM column ng bawat teller (Per-Agent Row)'
+        ? 'Global Mode: Deducted in Consolidated Summary Box'
+        : 'Global Mode: Included in Teller COMM Row (Per-Agent)'
     )
   }
 
@@ -531,7 +531,7 @@ export default function CommissionManagementView({
               </span>
             </div>
             <p className="mode-panel-desc">
-              Piliin kung saan ibabawas ang Coordinator / Admin Share: <strong>Option 1 (Per-Agent Row)</strong> o <strong>Option 2 (Direktang ibawas sa CONSOLIDATED SUPERVISOR TOTAL box)</strong>.
+              Choose how the Coordinator / Admin Share is deducted: <strong>Option 1 (Per-Agent Row)</strong> or <strong>Option 2 (Directly Deducted in Consolidated Supervisor Total Box)</strong>.
             </p>
           </div>
         </div>
@@ -541,12 +541,12 @@ export default function CommissionManagementView({
             type="button"
             className={`mode-toggle-btn ${settings.globalCoordinatorMode !== 'consolidated' ? 'active' : ''}`}
             onClick={() => handleToggleGlobalCoordinatorMode('per_agent')}
-            title="Option 1: Kasama sa COMM column ng bawat agent row (10% + 5%)"
+            title="Option 1: Included in each agent's COMM row column (10% + 5%)"
           >
             <span className="mode-radio-dot" />
             <div className="mode-btn-content">
               <strong>Option 1: Per-Agent Row</strong>
-              <small>Kasama sa COMM column ng bawat teller (10% + 5%)</small>
+              <small>Included in teller COMM column (10% + 5%)</small>
             </div>
           </button>
 
@@ -554,12 +554,12 @@ export default function CommissionManagementView({
             type="button"
             className={`mode-toggle-btn ${settings.globalCoordinatorMode === 'consolidated' ? 'active mode-purple' : ''}`}
             onClick={() => handleToggleGlobalCoordinatorMode('consolidated')}
-            title="Option 2: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box sa ibaba ng Overall Agent Commission"
+            title="Option 2: Directly deducted in Consolidated Supervisor Total box below Overall Agent Commission"
           >
             <span className="mode-radio-dot" />
             <div className="mode-btn-content">
               <strong>Option 2: Consolidated Box (Direct)</strong>
-              <small>Direktang ibawas sa loob ng box sa ibaba ng Agent Comm</small>
+              <small>Directly deducted in summary box below Agent Comm</small>
             </div>
           </button>
         </div>
@@ -787,7 +787,7 @@ export default function CommissionManagementView({
                           return (
                             <span
                               className={`spvr-mode-chip-indicator ${effMode === 'consolidated' ? 'chip-box-mode' : 'chip-row-mode'}`}
-                              title={effMode === 'consolidated' ? 'Option 2: Diretso bawas sa Consolidated Total Box' : 'Option 1: Kasama sa Teller Row COMM'}
+                              title={effMode === 'consolidated' ? 'Option 2: Deducted in Consolidated Total Box' : 'Option 1: Included in Teller Row COMM'}
                             >
                               {effMode === 'consolidated' ? '📦 Box Deduction' : '📋 Row Deduction'}
                             </span>
@@ -958,7 +958,7 @@ export default function CommissionManagementView({
                           type="button"
                           className={`spvr-mode-pill ${spvrConfig?.coordinatorMode === 'per_agent' ? 'active-row' : ''}`}
                           onClick={() => handleUpdateSupervisorCoordinatorMode(spvrKey, 'per_agent')}
-                          title="Option 1: Kasama sa COMM column ng bawat teller (10% + 5%)"
+                          title="Option 1: Included in teller COMM column (10% + 5%)"
                         >
                           Row (10%+5%)
                         </button>
@@ -966,7 +966,7 @@ export default function CommissionManagementView({
                           type="button"
                           className={`spvr-mode-pill ${spvrConfig?.coordinatorMode === 'consolidated' ? 'active-box' : ''}`}
                           onClick={() => handleUpdateSupervisorCoordinatorMode(spvrKey, 'consolidated')}
-                          title="Option 2: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box sa ibaba ng Overall Agent Commission"
+                          title="Option 2: Directly deducted in Consolidated Supervisor Total box below Overall Agent Commission"
                         >
                           Box (Direct)
                         </button>
