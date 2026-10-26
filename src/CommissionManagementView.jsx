@@ -3,6 +3,9 @@ import {
   loadCommissionSettings,
   saveCommissionSettings,
   getAgentCommissionRate,
+  getSupervisorCoordinatorMode,
+  updateGlobalCoordinatorMode,
+  updateSupervisorCoordinatorMode,
   updateSupervisorDefaultRate,
   updateSupervisorCoordinatorRate,
   setAgentOverride,
@@ -212,6 +215,35 @@ export default function CommissionManagementView({
     setEditingSpvrCoorKey(null)
     onRatesUpdated(updated)
     showToast(`Updated default admin/coordinator commission for "${spvrName}" to ${val.toFixed(1)}%.`)
+  }
+
+  const handleToggleGlobalCoordinatorMode = (newMode) => {
+    if (!canEdit) {
+      showToast('Action Denied: You do not have permission to modify commission settings.', 'error')
+      return
+    }
+    const updated = updateGlobalCoordinatorMode(newMode, settings)
+    setSettings(updated)
+    onRatesUpdated(updated)
+    showToast(
+      newMode === 'consolidated'
+        ? 'Global Mode: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box'
+        : 'Global Mode: Kasama sa COMM column ng bawat teller (Per-Agent Row)'
+    )
+  }
+
+  const handleUpdateSupervisorCoordinatorMode = (spvrName, newMode) => {
+    if (!canEdit) {
+      showToast('Action Denied: You do not have permission to modify commission settings.', 'error')
+      return
+    }
+    const updated = updateSupervisorCoordinatorMode(spvrName, newMode, settings)
+    setSettings(updated)
+    onRatesUpdated(updated)
+    const label = newMode === 'consolidated'
+      ? 'Consolidated Box (Direct)'
+      : (newMode === 'per_agent' ? 'Per-Agent Row (10%+5%)' : 'Default (Global)')
+    showToast(`Deduction mode for "${spvrName}" set to: ${label}.`)
   }
 
   const handleToggleAgentOverride = (spvrName, agentKey, currentRateInfo) => {
@@ -485,6 +517,54 @@ export default function CommissionManagementView({
         </div>
       </div>
 
+      {/* Global Coordinator Deduction Mode Control Panel */}
+      <div className="deduction-mode-control-panel">
+        <div className="mode-panel-left">
+          <div className="mode-icon-circle">
+            <SvgIcon name="slider" size={18} />
+          </div>
+          <div>
+            <div className="mode-panel-title">
+              <strong>Admin / Coordinator Share Deduction Mode</strong>
+              <span className={`mode-badge ${settings.globalCoordinatorMode === 'consolidated' ? 'badge-purple' : 'badge-blue'}`}>
+                {settings.globalCoordinatorMode === 'consolidated' ? 'Consolidated Box Mode' : 'Per-Agent Row Mode'}
+              </span>
+            </div>
+            <p className="mode-panel-desc">
+              Piliin kung saan ibabawas ang Coordinator / Admin Share: <strong>Option 1 (Per-Agent Row)</strong> o <strong>Option 2 (Direktang ibawas sa CONSOLIDATED SUPERVISOR TOTAL box)</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div className="mode-toggle-group">
+          <button
+            type="button"
+            className={`mode-toggle-btn ${settings.globalCoordinatorMode !== 'consolidated' ? 'active' : ''}`}
+            onClick={() => handleToggleGlobalCoordinatorMode('per_agent')}
+            title="Option 1: Kasama sa COMM column ng bawat agent row (10% + 5%)"
+          >
+            <span className="mode-radio-dot" />
+            <div className="mode-btn-content">
+              <strong>Option 1: Per-Agent Row</strong>
+              <small>Kasama sa COMM column ng bawat teller (10% + 5%)</small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={`mode-toggle-btn ${settings.globalCoordinatorMode === 'consolidated' ? 'active mode-purple' : ''}`}
+            onClick={() => handleToggleGlobalCoordinatorMode('consolidated')}
+            title="Option 2: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box sa ibaba ng Overall Agent Commission"
+          >
+            <span className="mode-radio-dot" />
+            <div className="mode-btn-content">
+              <strong>Option 2: Consolidated Box (Direct)</strong>
+              <small>Direktang ibawas sa loob ng box sa ibaba ng Agent Comm</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Interactive Simulator */}
       {showCalculator && (
         <div className="commission-calculator-panel">
@@ -702,6 +782,17 @@ export default function CommissionManagementView({
                             👥 Coor: {currentDefaultCoordinatorRate.toFixed(1)}%
                           </span>
                         )}
+                        {(() => {
+                          const effMode = getSupervisorCoordinatorMode(spvrKey, settings)
+                          return (
+                            <span
+                              className={`spvr-mode-chip-indicator ${effMode === 'consolidated' ? 'chip-box-mode' : 'chip-row-mode'}`}
+                              title={effMode === 'consolidated' ? 'Option 2: Diretso bawas sa Consolidated Total Box' : 'Option 1: Kasama sa Teller Row COMM'}
+                            >
+                              {effMode === 'consolidated' ? '📦 Box Deduction' : '📋 Row Deduction'}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <div className="spvr-summary-metrics">
                         <span>Total Gross: <strong>₱ {formatAmount(spvr.totalGross)}</strong></span>
@@ -849,6 +940,37 @@ export default function CommissionManagementView({
                           ))}
                         </div>
                       )}
+                    </div>
+
+                    {/* Deduction Mode Selector for this Supervisor */}
+                    <div className="spvr-default-rate-badge spvr-mode-badge-wrap">
+                      <span className="rate-badge-label">Deduction:</span>
+                      <div className="spvr-mode-pills-row">
+                        <button
+                          type="button"
+                          className={`spvr-mode-pill ${(!spvrConfig?.coordinatorMode || spvrConfig?.coordinatorMode === 'default') ? 'active-default' : ''}`}
+                          onClick={() => handleUpdateSupervisorCoordinatorMode(spvrKey, 'default')}
+                          title={`Inherit Global Mode (${settings.globalCoordinatorMode === 'consolidated' ? 'Consolidated Box' : 'Per-Agent Row'})`}
+                        >
+                          Auto ({settings.globalCoordinatorMode === 'consolidated' ? 'Box' : 'Row'})
+                        </button>
+                        <button
+                          type="button"
+                          className={`spvr-mode-pill ${spvrConfig?.coordinatorMode === 'per_agent' ? 'active-row' : ''}`}
+                          onClick={() => handleUpdateSupervisorCoordinatorMode(spvrKey, 'per_agent')}
+                          title="Option 1: Kasama sa COMM column ng bawat teller (10% + 5%)"
+                        >
+                          Row (10%+5%)
+                        </button>
+                        <button
+                          type="button"
+                          className={`spvr-mode-pill ${spvrConfig?.coordinatorMode === 'consolidated' ? 'active-box' : ''}`}
+                          onClick={() => handleUpdateSupervisorCoordinatorMode(spvrKey, 'consolidated')}
+                          title="Option 2: Diretso ibawas sa CONSOLIDATED SUPERVISOR TOTAL box sa ibaba ng Overall Agent Commission"
+                        >
+                          Box (Direct)
+                        </button>
+                      </div>
                     </div>
 
                     {activeOverridesCount > 0 && canEdit && (

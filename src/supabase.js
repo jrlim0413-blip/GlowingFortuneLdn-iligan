@@ -362,6 +362,8 @@ export async function saveSupabaseCommissionSettings(settings) {
   try {
     const payload = {
       globalDefaultRate: Number(settings.globalDefaultRate) || 10.0,
+      globalCoordinatorRate: Number(settings.globalCoordinatorRate) || 0.0,
+      globalCoordinatorMode: settings.globalCoordinatorMode || 'per_agent',
       supervisors: settings.supervisors || {},
       updatedAt: new Date().toISOString(),
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { getPayoutShortagesFromSupabase } from './supabase'
+import { getSupervisorCoordinatorMode } from './commissions'
 import './DrawDeficitsExcelStatement.css'
 
 function formatExcelDate(dateStr) {
@@ -152,6 +153,11 @@ export default function DrawDeficitsExcelStatement({
     })
   }, [group, allSupervisors, isConsolidated])
 
+  const isConsolidatedMode = useMemo(() => {
+    if (group?.coordinatorMode) return group.coordinatorMode === 'consolidated'
+    return getSupervisorCoordinatorMode(group?.supervisor) === 'consolidated'
+  }, [group])
+
   const overallTotals = useMemo(() => {
     const rawGroups = (isConsolidated && allSupervisors && allSupervisors.length > 0)
       ? allSupervisors
@@ -159,6 +165,8 @@ export default function DrawDeficitsExcelStatement({
 
     let gross = 0
     let hits = 0
+    let agentSalary = 0
+    let coordinatorSalary = 0
     let commission = 0
     let net = 0
     let remittance = 0
@@ -168,13 +176,19 @@ export default function DrawDeficitsExcelStatement({
         const agGross = Number(agent.totalGross) || 0
         const agHits = Number(agent.totalHits) || 0
         const commRate = agent.commissionRate !== undefined ? agent.commissionRate : 10
-        const agComm = agent.totalSalary !== undefined ? Number(agent.totalSalary) : (agGross * (commRate / 100))
+        const coorRate = agent.coordinatorRate !== undefined ? Number(agent.coordinatorRate) : 0
+
+        const agAgentSalary = agent.agentSalary !== undefined ? Number(agent.agentSalary) : (agGross * (commRate / 100))
+        const agCoordinatorSalary = agent.coordinatorSalary !== undefined ? Number(agent.coordinatorSalary) : (agGross * (coorRate / 100))
+        const agTotalComm = agAgentSalary + agCoordinatorSalary
         const agNet = agGross - agHits
-        const agRemit = agNet - agComm
+        const agRemit = agNet - agTotalComm
 
         gross += agGross
         hits += agHits
-        commission += agComm
+        agentSalary += agAgentSalary
+        coordinatorSalary += agCoordinatorSalary
+        commission += agTotalComm
         net += agNet
         remittance += agRemit
       })
@@ -183,6 +197,8 @@ export default function DrawDeficitsExcelStatement({
     return {
       gross,
       hits,
+      agentSalary,
+      coordinatorSalary,
       commission,
       net,
       remittance,
@@ -383,8 +399,26 @@ export default function DrawDeficitsExcelStatement({
             <div className="modern-sum-line">
               <span className="sum-label">Overall Agent Commission</span>
               <span className="sum-eq">=</span>
-              <span className="sum-val">{formatCurrencyTotal(overallTotals.commission)}</span>
+              <span className="sum-val">
+                {formatCurrencyTotal(isConsolidatedMode ? overallTotals.agentSalary : overallTotals.commission)}
+              </span>
             </div>
+            {isConsolidatedMode && overallTotals.coordinatorSalary > 0 && (
+              <div className="modern-sum-line" style={{ color: '#7c3aed' }}>
+                <span className="sum-label" style={{ color: '#7c3aed', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span>Admin / Coordinator Share</span>
+                  {overallTotals.gross > 0 && (
+                    <small style={{ fontSize: '9.5px', background: 'rgba(124, 58, 237, 0.1)', padding: '1px 5px', borderRadius: '4px', color: '#7c3aed', fontWeight: 600 }}>
+                      {((overallTotals.coordinatorSalary / overallTotals.gross) * 100).toFixed(1)}%
+                    </small>
+                  )}
+                </span>
+                <span className="sum-eq" style={{ color: '#7c3aed' }}>=</span>
+                <span className="sum-val" style={{ color: '#7c3aed', fontWeight: 700 }}>
+                  {formatCurrencyTotal(overallTotals.coordinatorSalary)}
+                </span>
+              </div>
+            )}
             <div className="modern-sum-line">
               <span className="sum-label">Overall Agent Net</span>
               <span className="sum-eq">=</span>

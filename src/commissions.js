@@ -3,6 +3,7 @@ import { saveSupabaseCommissionSettings } from './supabase.js'
 export const DEFAULT_COMMISSION_CONFIG = {
   globalDefaultRate: 10.0,
   globalCoordinatorRate: 0.0,
+  globalCoordinatorMode: 'per_agent', // 'per_agent' (Option 1: row COMM) | 'consolidated' (Option 2: bawas sa summary box)
   supervisors: {},
 }
 
@@ -13,6 +14,7 @@ export function setInMemoryCommissionSettings(settings) {
   inMemoryCommissionConfig = {
     globalDefaultRate: Number(settings.globalDefaultRate) || 10.0,
     globalCoordinatorRate: Number(settings.globalCoordinatorRate) || 0.0,
+    globalCoordinatorMode: settings.globalCoordinatorMode === 'consolidated' ? 'consolidated' : 'per_agent',
     supervisors: settings.supervisors && typeof settings.supervisors === 'object' ? settings.supervisors : {},
   }
 }
@@ -21,6 +23,7 @@ export function loadCommissionSettings() {
   return {
     globalDefaultRate: Number(inMemoryCommissionConfig.globalDefaultRate) || 10.0,
     globalCoordinatorRate: Number(inMemoryCommissionConfig.globalCoordinatorRate) || 0.0,
+    globalCoordinatorMode: inMemoryCommissionConfig.globalCoordinatorMode === 'consolidated' ? 'consolidated' : 'per_agent',
     supervisors: inMemoryCommissionConfig.supervisors ? { ...inMemoryCommissionConfig.supervisors } : {},
   }
 }
@@ -30,12 +33,14 @@ export function saveCommissionSettings(settings) {
     const payload = {
       globalDefaultRate: Number(settings.globalDefaultRate) || 10.0,
       globalCoordinatorRate: Number(settings.globalCoordinatorRate) || 0.0,
+      globalCoordinatorMode: settings.globalCoordinatorMode === 'consolidated' ? 'consolidated' : 'per_agent',
       supervisors: settings.supervisors || {},
       updatedAt: new Date().toISOString(),
     }
     inMemoryCommissionConfig = {
       globalDefaultRate: payload.globalDefaultRate,
       globalCoordinatorRate: payload.globalCoordinatorRate,
+      globalCoordinatorMode: payload.globalCoordinatorMode,
       supervisors: payload.supervisors,
     }
 
@@ -148,6 +153,48 @@ export function updateSupervisorCoordinatorRate(supervisorName, newRate, current
     settings.supervisors[spvrKey] = {
       ...settings.supervisors[spvrKey],
       defaultCoordinatorRate: rateNum,
+    }
+  }
+
+  saveCommissionSettings(settings)
+  return settings
+}
+
+export function getSupervisorCoordinatorMode(supervisorName, settings = null) {
+  const currentSettings = settings || loadCommissionSettings()
+  const spvrKey = String(supervisorName || '').trim().toUpperCase()
+  const spvrConfig = currentSettings.supervisors?.[spvrKey]
+  if (spvrConfig?.coordinatorMode && spvrConfig.coordinatorMode !== 'default') {
+    return spvrConfig.coordinatorMode
+  }
+  return currentSettings.globalCoordinatorMode || 'per_agent'
+}
+
+export function updateGlobalCoordinatorMode(newMode, currentSettings = null) {
+  const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
+  settings.globalCoordinatorMode = newMode === 'consolidated' ? 'consolidated' : 'per_agent'
+  saveCommissionSettings(settings)
+  return settings
+}
+
+export function updateSupervisorCoordinatorMode(supervisorName, newMode, currentSettings = null) {
+  const settings = currentSettings ? { ...currentSettings } : loadCommissionSettings()
+  const spvrKey = String(supervisorName || '').trim().toUpperCase()
+  const validMode = (newMode === 'consolidated' || newMode === 'per_agent') ? newMode : undefined
+
+  if (!settings.supervisors) settings.supervisors = {}
+  if (!settings.supervisors[spvrKey]) {
+    settings.supervisors[spvrKey] = {
+      defaultRate: settings.globalDefaultRate || 10.0,
+      defaultCoordinatorRate: settings.globalCoordinatorRate || 0.0,
+      coordinatorMode: validMode,
+      agentOverrides: {},
+      coordinatorOverrides: {},
+    }
+  } else {
+    settings.supervisors[spvrKey] = {
+      ...settings.supervisors[spvrKey],
+      coordinatorMode: validMode,
     }
   }
 

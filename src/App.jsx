@@ -9,7 +9,7 @@ import DrawDeficitsExcelStatement from './DrawDeficitsExcelStatement'
 import AutoShrinkText from './AutoShrinkText'
 import CustomPrintBrowserModal from './CustomPrintBrowserModal'
 import './CustomPrintBrowserModal.css'
-import { loadCommissionSettings, getAgentCommissionRate } from './commissions'
+import { loadCommissionSettings, getAgentCommissionRate, getSupervisorCoordinatorMode } from './commissions'
 import {
   signOutFromSupabase,
   syncMatrixPermissionsFromSupabase,
@@ -381,15 +381,22 @@ function getSupervisorReports(rows, supervisorRows = [], commissionSettings = nu
   })
 
   return Array.from(grouped.values()).map((group) => {
+    const coordinatorMode = getSupervisorCoordinatorMode(group.supervisor, commissionSettings)
     let groupSalary = 0
+    let groupAgentSalary = 0
+    let groupCoordinatorSalary = 0
+
     const agents = Array.from(group.agents.values()).map((agent) => {
       const rateInfo = getAgentCommissionRate(group.supervisor, agent.key, commissionSettings)
       const agentSalary = agent.totalGross * (rateInfo.rate / 100)
       const coordinatorSalary = agent.totalGross * (rateInfo.coordinatorRate / 100)
-      const totalSalary = agentSalary + coordinatorSalary
+      // When mode is consolidated, agent's row commission is strictly agentSalary
+      const totalSalary = coordinatorMode === 'consolidated' ? agentSalary : (agentSalary + coordinatorSalary)
       const totalNet = agent.totalGross - agent.totalHits
       const totalKabig = totalNet - totalSalary
       groupSalary += totalSalary
+      groupAgentSalary += agentSalary
+      groupCoordinatorSalary += coordinatorSalary
 
       return {
         ...agent,
@@ -397,6 +404,7 @@ function getSupervisorReports(rows, supervisorRows = [], commissionSettings = nu
         isCommissionOverride: rateInfo.isOverride,
         coordinatorRate: rateInfo.coordinatorRate,
         isCoordinatorOverride: rateInfo.isCoordinatorOverride,
+        coordinatorMode,
         totalCommissionRate: rateInfo.totalRate,
         supervisorDefaultRate: rateInfo.supervisorDefault,
         supervisorCoordinatorDefaultRate: rateInfo.supervisorCoordinatorDefault,
@@ -409,13 +417,16 @@ function getSupervisorReports(rows, supervisorRows = [], commissionSettings = nu
     })
 
     const totalNet = group.totalGross - group.totalHits
-    const totalKabig = totalNet - groupSalary
+    const totalKabig = totalNet - (coordinatorMode === 'consolidated' ? (groupAgentSalary + groupCoordinatorSalary) : groupSalary)
 
     return {
       ...group,
       agents,
+      coordinatorMode,
       totalNet,
       totalSalary: groupSalary,
+      totalAgentSalary: groupAgentSalary,
+      totalCoordinatorSalary: groupCoordinatorSalary,
       totalKabig,
     }
   })
@@ -693,7 +704,10 @@ function getAgentOverallMetrics(agent) {
   const coordinatorSalary = agent.coordinatorSalary !== undefined
     ? Number(agent.coordinatorSalary)
     : (agent.coordinatorRate ? gross * (Number(agent.coordinatorRate) / 100) : 0)
-  const commission = agent.totalSalary !== undefined ? Number(agent.totalSalary) : (agentSalary + coordinatorSalary)
+  const isConsolidated = agent.coordinatorMode === 'consolidated'
+  const commission = agent.totalSalary !== undefined
+    ? Number(agent.totalSalary)
+    : (isConsolidated ? agentSalary : (agentSalary + coordinatorSalary))
   const net = gross - hits
   const netSales = net - commission
   return {
@@ -702,6 +716,7 @@ function getAgentOverallMetrics(agent) {
     commission,
     agentSalary,
     coordinatorSalary,
+    coordinatorMode: agent.coordinatorMode,
     commissionRate: agent.commissionRate,
     coordinatorRate: agent.coordinatorRate || 0,
     net,
@@ -923,7 +938,7 @@ function SupervisorStatementTable({
                       <td className="statement-td statement-num-td">
                         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
                           <span>{formatAmount(agent.commission)}</span>
-                          {agent.coordinatorRate > 0 ? (
+                          {agent.coordinatorMode !== 'consolidated' && agent.coordinatorRate > 0 ? (
                             <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>
                               ({agent.commissionRate}% + {agent.coordinatorRate}%)
                             </span>
@@ -998,7 +1013,7 @@ function SupervisorStatementTable({
                       <td className="statement-td statement-num-td">
                         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', lineHeight: 1.15 }}>
                           <span>{formatAmount(agent.commission)}</span>
-                          {agent.coordinatorRate > 0 ? (
+                          {agent.coordinatorMode !== 'consolidated' && agent.coordinatorRate > 0 ? (
                             <span style={{ fontSize: '7.5px', color: '#64748b', lineHeight: 1, marginTop: '1px' }}>
                               ({agent.commissionRate}% + {agent.coordinatorRate}%)
                             </span>
@@ -1099,9 +1114,13 @@ function SupervisorStatementTable({
                       <td colSpan={5} className="statement-td statement-split-label-td">
                         <strong style={{ color: '#0f172a' }}>• Net Remittance to Office</strong>
                       </td>
-                      <td className={`statement-td statement-split-num-td statement-split-final-num statement-remit-td ${grandTotals.netSales < 0 ? 'accounting-deficit-text' : ''}`}>
+                      <td className={`statement-td statement-split-num-td statement-split-final-num statement-remit-td ${(grandTotals.net - totalAgentSalary - totalCoordinatorSalary) < 0 ? 'accounting-deficit-text' : ''}`}>
                         <span className="accounting-currency-symbol">₱</span>
-                        <strong>{grandTotals.netSales < 0 ? `(${formatAmount(Math.abs(grandTotals.netSales))})` : formatAmount(grandTotals.netSales)}</strong>
+                        <strong>
+                          {(grandTotals.net - totalAgentSalary - totalCoordinatorSalary) < 0
+                            ? `(${formatAmount(Math.abs(grandTotals.net - totalAgentSalary - totalCoordinatorSalary))})`
+                            : formatAmount(grandTotals.net - totalAgentSalary - totalCoordinatorSalary)}
+                        </strong>
                       </td>
                     </tr>
                   </>
