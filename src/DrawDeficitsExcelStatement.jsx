@@ -419,7 +419,7 @@ export default function DrawDeficitsExcelStatement({
                 </span>
               </div>
             )}
-            <div className="modern-sum-line">
+            <div className={`modern-sum-line ${overallTotals.net < 0 ? 'is-negative-remit' : ''}`}>
               <span className="sum-label">Overall Agent Net</span>
               <span className="sum-eq">=</span>
               <span className="sum-val">{formatCurrencyTotal(overallTotals.net)}</span>

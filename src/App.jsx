@@ -863,7 +863,7 @@ function SupervisorStatementTable({
   }, [computedScale, fitOnePage, isModal])
 
   return (
-    <div ref={wrapRef} style={{ overflow: 'hidden', width: '100%', position: 'relative' }}>
+    <div ref={wrapRef} style={{ overflow: isModal ? 'visible' : 'hidden', width: '100%', position: 'relative' }}>
     <div
       ref={sheetRef}
       className={`statement-sheet ${isModal ? 'statement-sheet-modal' : 'statement-sheet-inline'} ${fitOnePage ? 'a4-single-page-fit' : ''}`}
@@ -1076,8 +1076,8 @@ function SupervisorStatementTable({
                   <td className="statement-td statement-grand-num-td">
                     <strong>{formatAmount(grandTotals.commission)}</strong>
                   </td>
-                  <td className="statement-td statement-grand-num-td">
-                    <strong>{formatAmount(grandTotals.net)}</strong>
+                  <td className={`statement-td statement-grand-num-td ${grandTotals.net < 0 ? 'accounting-deficit-text' : ''}`}>
+                    <strong>{grandTotals.net < 0 ? `(${formatAmount(Math.abs(grandTotals.net))})` : formatAmount(grandTotals.net)}</strong>
                   </td>
                   <td className={`statement-td statement-grand-num-td statement-remit-td ${grandTotals.netSales < 0 ? 'accounting-deficit-text' : ''}`}>
                     <span className="accounting-currency-symbol">₱</span>

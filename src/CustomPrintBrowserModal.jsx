@@ -195,6 +195,8 @@ export function CustomPrintBrowserModal({
         await document.fonts.ready
       }
 
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)))
+
       let blob = null
       let dataUrl = null
 
@@ -206,6 +208,8 @@ export function CustomPrintBrowserModal({
           style: {
             boxShadow: 'none',
             margin: '0',
+            overflow: 'visible',
+            maxHeight: 'none',
           },
         })
       } catch (imgErr) {
@@ -234,6 +238,28 @@ export function CustomPrintBrowserModal({
 
             const fixStyle = clonedDoc.createElement('style')
             fixStyle.textContent = `
+              * {
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+              }
+              *::-webkit-scrollbar {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+              }
+              .statement-table-container,
+              .statement-left-col,
+              .statement-right-col,
+              .statement-two-col-body,
+              .statement-sheet,
+              .paper-printable-content-area,
+              .visual-paper-sheet {
+                overflow: visible !important;
+                overflow-x: visible !important;
+                overflow-y: visible !important;
+                max-height: none !important;
+                height: auto !important;
+              }
               .statement-agent-name, .modern-td-agent-label, .modern-draw-total-copy, .modern-td-name, .modern-draw-total-label {
                 overflow: visible !important;
                 line-height: 1.25 !important;
@@ -256,6 +282,26 @@ export function CustomPrintBrowserModal({
               .statement-balance-table, .modern-single-col-table {
                 border-collapse: separate !important;
                 border-spacing: 0 !important;
+              }
+              .accounting-deficit-text,
+              .statement-neg-label-indent,
+              .negative-value,
+              .is-negative-remit .sum-val,
+              .grand-total-negative .grand-val,
+              .grand-total-negative .grand-label,
+              .grand-total-negative .sum-eq,
+              td.accounting-deficit-text,
+              td.statement-td.accounting-deficit-text {
+                color: #dc2626 !important;
+                font-weight: 700 !important;
+              }
+              .statement-neg-subtotal-cell {
+                border-top: 1pt solid #dc2626 !important;
+                border-bottom: 0.75pt solid #dc2626 !important;
+              }
+              .grand-total-negative {
+                background: #fef2f2 !important;
+                border: 1.5px solid #dc2626 !important;
               }
             `
             clonedDoc.head.appendChild(fixStyle)

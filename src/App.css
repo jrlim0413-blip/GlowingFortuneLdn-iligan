@@ -789,7 +789,7 @@ button { font: inherit; }
 
 .statement-table-container {
   width: 100%;
-  overflow-x: hidden;
+  overflow: visible;
   margin-bottom: 24px;
 }
 
@@ -1796,7 +1796,7 @@ button { font: inherit; }
 
 .statement-left-col {
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 

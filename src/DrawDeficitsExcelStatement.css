@@ -654,8 +654,8 @@
   color: #1e3a8a;
 }
 
-/* Negative Grand Total & Remit Line */
-.remit-line.is-negative-remit .sum-val {
+.remit-line.is-negative-remit .sum-val,
+.modern-sum-line.is-negative-remit .sum-val {
   color: #dc2626 !important;
 }
 
@@ -697,7 +697,8 @@
   .remit-line .sum-val {
     font-size: 7.5pt !important;
   }
-  .remit-line.is-negative-remit .sum-val {
+  .remit-line.is-negative-remit .sum-val,
+  .modern-sum-line.is-negative-remit .sum-val {
     color: #dc2626 !important;
   }
   .psr-block-title {

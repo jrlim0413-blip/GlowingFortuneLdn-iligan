@@ -537,7 +537,8 @@
 
 .paper-printable-content-area {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  height: auto;
 }
 
 .visual-paper-sheet .statement-meta-pill {
@@ -997,4 +998,127 @@ body.custom-print-capturing .statement-print-footer-tag {
   color: #94a3b8 !important;
   margin-top: 3pt !important;
 }
+
+/* ==========================================================================
+   SCROLLBAR ELIMINATION & OVERFLOW VISIBILITY (Zero Scrollbar During Capture)
+   ========================================================================== */
+.visual-paper-sheet,
+.visual-paper-sheet *,
+.visual-paper-sheet.statement-print-exact-mode,
+.visual-paper-sheet.statement-print-exact-mode *,
+.statement-print-exact-mode,
+.statement-print-exact-mode *,
+body.custom-print-capturing,
+body.custom-print-capturing * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.visual-paper-sheet::-webkit-scrollbar,
+.visual-paper-sheet *::-webkit-scrollbar,
+.visual-paper-sheet.statement-print-exact-mode::-webkit-scrollbar,
+.visual-paper-sheet.statement-print-exact-mode *::-webkit-scrollbar,
+.statement-print-exact-mode::-webkit-scrollbar,
+.statement-print-exact-mode *::-webkit-scrollbar,
+body.custom-print-capturing *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.visual-paper-sheet .statement-table-container,
+.visual-paper-sheet .statement-left-col,
+.visual-paper-sheet .statement-right-col,
+.visual-paper-sheet .statement-two-col-body,
+.visual-paper-sheet .statement-sheet,
+.visual-paper-sheet .paper-printable-content-area,
+.visual-paper-sheet.statement-print-exact-mode .statement-table-container,
+.visual-paper-sheet.statement-print-exact-mode .statement-left-col,
+.visual-paper-sheet.statement-print-exact-mode .statement-right-col,
+.visual-paper-sheet.statement-print-exact-mode .statement-two-col-body,
+.visual-paper-sheet.statement-print-exact-mode .statement-sheet,
+.statement-print-exact-mode .statement-table-container,
+.statement-print-exact-mode .statement-left-col,
+.statement-print-exact-mode .statement-right-col,
+.statement-print-exact-mode .statement-two-col-body,
+.statement-print-exact-mode .statement-sheet,
+body.custom-print-capturing .statement-table-container,
+body.custom-print-capturing .statement-left-col,
+body.custom-print-capturing .statement-right-col,
+body.custom-print-capturing .statement-two-col-body,
+body.custom-print-capturing .statement-sheet {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* ==========================================================================
+   NEGATIVE DEFICIT COLOR PRESERVATION (Must Always Remain Bold Red)
+   ========================================================================== */
+.visual-paper-sheet .accounting-deficit-text,
+.visual-paper-sheet .statement-neg-label-indent,
+.visual-paper-sheet.statement-print-exact-mode .accounting-deficit-text,
+.statement-print-exact-mode .accounting-deficit-text,
+body.custom-print-capturing .accounting-deficit-text,
+.visual-paper-sheet td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode td.accounting-deficit-text,
+.statement-print-exact-mode td.accounting-deficit-text,
+body.custom-print-capturing td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-td.accounting-deficit-text,
+.statement-print-exact-mode .statement-td.accounting-deficit-text,
+body.custom-print-capturing .statement-td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-num-td.accounting-deficit-text,
+.statement-print-exact-mode .statement-num-td.accounting-deficit-text,
+body.custom-print-capturing .statement-num-td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-remit-td.accounting-deficit-text,
+.statement-print-exact-mode .statement-remit-td.accounting-deficit-text,
+body.custom-print-capturing .statement-remit-td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-subtotal-num-td.accounting-deficit-text,
+.statement-print-exact-mode .statement-subtotal-num-td.accounting-deficit-text,
+body.custom-print-capturing .statement-subtotal-num-td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-grand-num-td.accounting-deficit-text,
+.statement-print-exact-mode .statement-grand-num-td.accounting-deficit-text,
+body.custom-print-capturing .statement-grand-num-td.accounting-deficit-text,
+.visual-paper-sheet.statement-print-exact-mode .statement-neg-label-indent,
+.statement-print-exact-mode .statement-neg-label-indent,
+body.custom-print-capturing .statement-neg-label-indent,
+.visual-paper-sheet.statement-print-exact-mode .statement-negative-heading-cell,
+.statement-print-exact-mode .statement-negative-heading-cell,
+body.custom-print-capturing .statement-negative-heading-cell,
+.visual-paper-sheet.statement-print-exact-mode .negative-value,
+.statement-print-exact-mode .negative-value,
+body.custom-print-capturing .negative-value,
+.visual-paper-sheet.statement-print-exact-mode .is-negative-remit .sum-val,
+.statement-print-exact-mode .is-negative-remit .sum-val,
+body.custom-print-capturing .is-negative-remit .sum-val,
+.visual-paper-sheet.statement-print-exact-mode .grand-total-negative .grand-val,
+.statement-print-exact-mode .grand-total-negative .grand-val,
+body.custom-print-capturing .grand-total-negative .grand-val,
+.visual-paper-sheet.statement-print-exact-mode .grand-total-negative .grand-label,
+.statement-print-exact-mode .grand-total-negative .grand-label,
+body.custom-print-capturing .grand-total-negative .grand-label,
+.visual-paper-sheet.statement-print-exact-mode .grand-total-negative .sum-eq,
+.statement-print-exact-mode .grand-total-negative .sum-eq,
+body.custom-print-capturing .grand-total-negative .sum-eq {
+  color: #dc2626 !important;
+  font-weight: 700 !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .statement-neg-subtotal-cell,
+.statement-print-exact-mode .statement-neg-subtotal-cell,
+body.custom-print-capturing .statement-neg-subtotal-cell {
+  border-top: 1pt solid #dc2626 !important;
+  border-bottom: 0.75pt solid #dc2626 !important;
+}
+
+.visual-paper-sheet.statement-print-exact-mode .grand-total-negative,
+.statement-print-exact-mode .grand-total-negative,
+body.custom-print-capturing .grand-total-negative {
+  background: #fef2f2 !important;
+  border: 1.5px solid #dc2626 !important;
+}
+
 
