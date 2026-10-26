@@ -424,7 +424,7 @@ export default function DrawDeficitsExcelStatement({
               <span className="sum-eq">=</span>
               <span className="sum-val">{formatCurrencyTotal(overallTotals.net)}</span>
             </div>
-            <div className="modern-sum-line remit-line">
+            <div className={`modern-sum-line remit-line ${overallTotals.remittance < 0 ? 'is-negative-remit' : ''}`}>
               <span className="sum-label">Overall Agent Remittance</span>
               <span className="sum-eq">=</span>
               <span className="sum-val">{formatCurrencyTotal(overallTotals.remittance)}</span>
@@ -453,13 +453,19 @@ export default function DrawDeficitsExcelStatement({
 
             <div className="modern-sum-hr" />
 
-            <div className="modern-sum-line grand-total-line">
-              <span className="sum-label grand-label">TOTAL REMITTANCE + PSR</span>
-              <span className="sum-eq">=</span>
-              <span className="sum-val grand-val">
-                {formatCurrencyTotal(overallTotals.remittance + psrSummary.totalPsr)}
-              </span>
-            </div>
+            {(() => {
+              const grandTotalValue = overallTotals.remittance + psrSummary.totalPsr
+              const isGrandTotalNegative = grandTotalValue < 0
+              return (
+                <div className={`modern-sum-line grand-total-line ${isGrandTotalNegative ? 'grand-total-negative' : ''}`}>
+                  <span className="sum-label grand-label">TOTAL REMITTANCE + PSR</span>
+                  <span className="sum-eq">=</span>
+                  <span className="sum-val grand-val">
+                    {formatCurrencyTotal(grandTotalValue)}
+                  </span>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>

@@ -654,6 +654,23 @@
   color: #1e3a8a;
 }
 
+/* Negative Grand Total & Remit Line */
+.remit-line.is-negative-remit .sum-val {
+  color: #dc2626 !important;
+}
+
+.grand-total-line.grand-total-negative {
+  background: #fef2f2 !important;
+  border: 1.5px solid #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.grand-total-line.grand-total-negative .grand-label,
+.grand-total-line.grand-total-negative .grand-val,
+.grand-total-line.grand-total-negative .sum-eq {
+  color: #dc2626 !important;
+}
+
 @media print {
   .modern-consolidated-card {
     margin-top: 4pt !important;
@@ -680,6 +697,9 @@
   .remit-line .sum-val {
     font-size: 7.5pt !important;
   }
+  .remit-line.is-negative-remit .sum-val {
+    color: #dc2626 !important;
+  }
   .psr-block-title {
     font-size: 7.2pt !important;
   }
@@ -692,5 +712,16 @@
   }
   .grand-label, .grand-val {
     font-size: 7.8pt !important;
+  }
+  .grand-total-line.grand-total-negative {
+    background: #fef2f2 !important;
+    border: 0.75pt solid #dc2626 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .grand-total-line.grand-total-negative .grand-label,
+  .grand-total-line.grand-total-negative .grand-val,
+  .grand-total-line.grand-total-negative .sum-eq {
+    color: #dc2626 !important;
   }
 }
